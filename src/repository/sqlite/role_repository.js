@@ -60,11 +60,13 @@ export class RoleRepositorySqlie implements RoleRepository {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find role with id ${id}`));
-                } else {
+                } else if (row) {
                     return this.rowToRole(row).
                         then(role => {
                         resolve(role);
                     });
+                } else {
+                    reject(new PersistenceError(`Could not find role with id ${id}`));
                 }
             });
         });
@@ -172,7 +174,7 @@ export class RoleRepositorySqlie implements RoleRepository {
                 'SELECT principal_id, role_id AS id, role_name ' +
                 'FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id', 
                 criteria, (row) => {
-                this.rowToRole(row).
+                return this.rowToRole(row).
                     then(role => {
                     principal.roles.add(role);
 				    return role;
@@ -189,7 +191,7 @@ export class RoleRepositorySqlie implements RoleRepository {
                 'SELECT parent_role_id, role_id AS id, role_name ' +
                 'FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id', 
                 criteria, (row) => {
-                this.rowToRole(row).
+                return this.rowToRole(row).
                     then(role => {
 				    return role;
                 });

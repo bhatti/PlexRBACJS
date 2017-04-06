@@ -46,13 +46,15 @@ export class ClaimRepositorySqlite implements ClaimRepository {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find claim with id ${id} due to ${err}`));
-                } else {
-                    this.rowToClaim(row).
+                } else if (row) {
+                    return this.rowToClaim(row).
                     then(claim => {
                         resolve(claim);
                     }).catch(err => {
                         reject(new PersistenceError(`Could not find claim with id ${id} due to ${err}`));
                     });
+                } else {
+                    reject(new PersistenceError(`Could not find claim with id ${id}`));
                 }
             });
         });
@@ -209,7 +211,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
             'SELECT principal_id, claim_id AS id, realm_id, action, resource, condition ' +
             'FROM principals_claims INNER JOIN claims on claims.rowid = principals_claims.claim_id', 
             criteria, (row) => {
-            this.rowToClaim(row).
+            return this.rowToClaim(row).
             then(claim => {
                 principal.claims.add(claim);
                 return claim;
@@ -229,7 +231,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
             'SELECT role_id, claim_id AS id, realm_id, action, resource, condition ' +
             'FROM roles_claims INNER JOIN claims on claims.rowid = roles_claims.claim_id', 
             criteria, (row) => {
-            this.rowToClaim(row).
+            return this.rowToClaim(row).
             then(claim => {
                 role.claims.add(claim);
                 return claim;

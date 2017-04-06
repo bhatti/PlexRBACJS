@@ -19,9 +19,9 @@ export class QueryHelper<T> {
         mapper: (row: any) => Promise<T>, 
         options: ?QueryOptions = null): Promise<Array<T>> {
         //
-        var query = criteria.size > 0 ? prefixQuery + ' where ' : prefixQuery;
+        var query = criteria.size > 0 ? prefixQuery + ' WHERE ' : prefixQuery;
         var params = [];
-        criteria.forEach((k, v) => {
+        criteria.forEach((v, k) => {
             if (Array.isArray(v)) {
                 query += `${k} in (?) `;
             } else {
@@ -35,7 +35,7 @@ export class QueryHelper<T> {
                 if (err) {
                     console.log(`---------->>>>>>>>>>>query ${query} failed due to ${err}`);
                     reject(err);
-                } else {
+                } else if (rows) {
                     var resultPromises = [];
                     rows.forEach(row => {
                         let promise = mapper(row);
@@ -46,6 +46,8 @@ export class QueryHelper<T> {
                     then(result => {
                         resolve(result);
                     });
+                } else {
+                    resolve([]);
                 }
             }); 
         });

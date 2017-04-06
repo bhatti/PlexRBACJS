@@ -53,11 +53,13 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find principal with id ${id}`));
-                } else {
-                    this.rowToPrincipal(row).
+                } else if (row) {
+                    return this.rowToPrincipal(row).
                         then(principal => {
                         resolve(principal);
                     });
+                } else {
+                    reject(new PersistenceError(`Could not find principal with id ${id}`));
                 }
             });
         });
@@ -72,11 +74,13 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE principal_name == ?`, principalName, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find principal with name ${principalName}`));
-                } else {
+                } else if (row) {
                     this.rowToPrincipal(row).
                         then(principal => {
                         resolve(principal);
                     });
+                } else {
+                    reject(new PersistenceError(`Could not find principal with name ${principalName}`));
                 }
             });
         });

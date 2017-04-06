@@ -1,4 +1,8 @@
-var assert = require('chai').assert;
+var chai = require('chai');
+var assert = chai.assert;
+var expect = chai.expect;
+var chaiAsPromised = require("chai-as-promised");
+chai.use(chaiAsPromised);
 
 import type {Realm}                 from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
@@ -24,6 +28,19 @@ describe('RealmRepository', function() {
 
   after(function(done) {
     this.dbHelper.close();
+    done();
+  });
+
+  describe('#saveGetById', function() {
+    it('should not be able to get realm by id without saving', function(done) {
+        let repository = new RealmRepositorySqlite(this.dbHelper);
+        repository.findById(1000).
+            then(realm => {
+            done(new Error('should fail'));
+        }).catch(err => {
+            done();
+        });
+    });
   });
 
   describe('#saveGetById', function() {
@@ -35,7 +52,6 @@ describe('RealmRepository', function() {
                 then(realm => {
                 assert.equal('mydomain', realm.realmName);
                 done();
-                console.log(`got ${String(realm)} calling done`);
             }).catch(err => {
                 done(err);
             });
@@ -52,7 +68,6 @@ describe('RealmRepository', function() {
                 then(realm => {
                 assert.equal('anotherdomain', realm.realmName);
                 done();
-                console.log(`got ${String(realm)} calling done`);
             }).catch(err => {
                 done(err);
             });
@@ -60,14 +75,29 @@ describe('RealmRepository', function() {
     });
   });
 
-/*
-          repository.search(new Map()).
-              then(result => {
-              console.log(`all ---- ${result.length}`);
-              //let realm = repository.findById(saved.id);
-              //console.log(`got ${realm}`)
-              //assert.equal('mydomain', realm.realmName);
-              done();
-          });
-  */
+  describe('#saveGetByName', function() {
+    it('should not be able to get realm by unknown name', function(done) {
+        let repository = new RealmRepositorySqlite(this.dbHelper);
+        repository.findByName('unknown-domain').
+            then(realm => {
+            done(new Error('should fail'));
+        }).catch(err => {
+            done();
+        });
+    });
+  });
+
+  describe('#search', function() {
+    it('should be able to search domain by name', function(done) {
+        let repository  = new RealmRepositorySqlite(this.dbHelper);
+        let criteria    = new Map();
+        criteria.set('realm_name', 'mydomain');
+        repository.search(criteria).
+            then(results => {
+            assert.equal(1, results.length);
+            assert.equal('mydomain', results[0].realmName);
+            done();
+        });
+    });
+  });
 });

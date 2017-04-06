@@ -36,11 +36,13 @@ export class RealmRepositorySqlite implements RealmRepository {
             db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find realm with id ${id} due to ${err}`));
-                } else {
+                } else if (row) {
                     this.rowToRealm(row).
                         then(realm => {
                         resolve(realm);
                     });
+                } else {
+                    reject(new PersistenceError(`Could not find realm with id ${id}`));
                 }
             });
         });
@@ -56,11 +58,13 @@ export class RealmRepositorySqlite implements RealmRepository {
             db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find realm with name ${realmName}`));
-                } else {
+                } else if (row) {
                     this.rowToRealm(row).
                         then(realm => {
                         resolve(realm);
                     });
+                } else {
+                    reject(new PersistenceError(`Could not find realm with name ${realmName}`));
                 }
             });
         });
@@ -106,7 +110,7 @@ export class RealmRepositorySqlite implements RealmRepository {
      */
     search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>> {
         let q:QueryHelper<Realm> = new QueryHelper(this.dbHelper.db);
-        return q.query(this.sqlPrefix, new Map(), row => {
+        return q.query(this.sqlPrefix, criteria, row => {
              return this.rowToRealm(row);
          }, options);
     }
