@@ -6,11 +6,8 @@ import type {Realm}     from './interface';
  * RealmImpl implements Realm for defining domain of the application
  */
 export class RealmImpl implements Realm {
-    id: number;         // unique database id
-    realmName: string;  // realm-name
-
-    constructor() {
-    }
+    id:         number;         // unique database id
+    realmName:  string;         // realm-name
 
     constructor(theId: number, 
                 theRealmName: string) {

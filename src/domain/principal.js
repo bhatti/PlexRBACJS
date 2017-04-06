@@ -57,9 +57,9 @@ export class PrincipalImpl implements Principal {
         role.claims.forEach(claim => {
             allClaims.add(claim);
         });
-        if (role.parent != null) {
-            this._loadRoleClaims(role.parent, allClaims);
-        }
+        role.parents.forEach(parentRole => {
+            this._loadRoleClaims(parentRole, allClaims);
+        });
     }
 
     /**

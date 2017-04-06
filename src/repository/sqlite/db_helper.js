@@ -1,69 +1,99 @@
 /*@flow*/
 
-var sqlite3 = require('sqlite3').verbose();
-import  {QueryOptions}      from '../interface';
-
+var sqlite3 =               require('sqlite3').verbose();
+import {QueryOptions}       from '../interface';
+import {PersistenceError}   from '../persistence_error';
 /**
  * DBHelper provides helper DB methods
+ * See https://github.com/mapbox/node-sqlite3/wiki
  */
 export class DBHelper {
     db: sqlite3.Database;
 
-    constructor(dbName: string) {
-        this.db = new sqlite3.Database(dbName);
+    constructor(path: string) {
+        this.db = new sqlite3.Database(path);
+    }
 
-        this.db.serialize(() => {
-            // principal or subject that needs to be checked
-            this.db.run('CREATE TABLE if not exists principals (realm_id INTEGER, principal_name TEXT)');
-            this.db.run('CREATE UNIQUE INDEX principals_realms_ndx on principals (realm_id, principal_name)');
+    createTables(doneCB: () => void) {
+        let createStmts = [
+            'CREATE TABLE if not exists realms (realm_name TEXT, PRIMARY KEY(realm_name))',
+            'CREATE TABLE if not exists principals (realm_id INT, principal_name TEXT, PRIMARY KEY(realm_id, principal_name))',
+            'CREATE TABLE if not exists roles (realm_id INT, role_name TEXT, PRIMARY KEY(realm_id, role_name))',
+            'CREATE TABLE if not exists role_parents (role_id INT, parent_role_id INT, PRIMARY KEY(role_id, parent_role_id))',
+            'CREATE TABLE if not exists principals_roles (principal_id INT, role_id INT, PRIMARY KEY(principal_id, role_id))',
+            'CREATE TABLE if not exists claims (realm_id INT, action TEXT, resource TEXT, condition TEXT, PRIMARY KEY(realm_id, action, resource, condition))',
+            'CREATE TABLE if not exists roles_claims (role_id INT, claim_id INT, PRIMARY KEY(role_id, claim_id))',
+            'CREATE TABLE if not exists principals_claims (principal_id INT, claim_id INT, PRIMARY KEY(principal_id, claim_id))',
+        ];
+        let indexStmts = [
+            'CREATE UNIQUE INDEX realms_ndx on realms (realm_name)',
+            'CREATE UNIQUE INDEX principals_realms_ndx on principals (realm_id, principal_name)',
+            'CREATE UNIQUE INDEX principals_roles_ndx on principals_roles(principal_id, role_id)',
+            'CREATE UNIQUE INDEX role_parents_ndx on role_parents(role_id, parent_role_id)',
+            'CREATE UNIQUE INDEX claims_ndx on claims(realm_id, action, resource, condition)',
+            'CREATE UNIQUE INDEX roles_claims_ndx on roles_claims(role_id, claim_id)',
+            'CREATE UNIQUE INDEX principals_claims_ndx on principals_claims(principal_id, claim_id)'
+        ];
+        //
+        DBHelper.__execAllAsync(this.db, createStmts, indexStmts).then(results => {
+            doneCB();
+        });
+    }
 
-            // realm or domain of application
-            this.db.run('CREATE TABLE if not exists realms (realm_name TEXT)');
-            this.db.run('CREATE UNIQUE INDEX realms_ndx on realms (realm_name)');
+    dropTables(doneCB: () => void) {
+        let dropStmts = [
+            'DROP TABLE if not exists principals',
+            'DROP TABLE if not exists realms',
+            'DROP TABLE if not exists roles',
+            'DROP TABLE if not exists role_parents',
+            'DROP TABLE if not exists principals_roles',
+            'DROP TABLE if not exists claims',
+            'DROP TABLE if not exists roles_claims',
+            'DROP TABLE if not exists principals_claims',
+            'DROP INDEX principals_realms_ndx',
+            'DROP INDEX realms_ndx',
+            'DROP INDEX realms_roles_ndx',
+            'DROP INDEX principals_roles_ndx',
+            'DROP INDEX claims_ndx',
+            'DROP INDEX roles_claims_ndx',
+            'DROP INDEX role_parents_ndx',
+            'DROP INDEX principals_claims_ndx'
+            ];
+        DBHelper.__execAllAsync(this.db, dropStmts).then(results => {
+            doneCB();
+        });
+    }
 
-            // role or function, roles are inheritable
-            this.db.run('CREATE TABLE if not exists roles (realm_id INTEGER, parent_id INTEGER, role_name TEXT)');
-            this.db.run('CREATE UNIQUE INDEX realms_roles_ndx on roles (realm_id, realm_name)');
+    static __execAllAsync(db, stmts, nextStmts) {
+        let promises = [];
+        stmts.forEach(stmt => {
+            promises.push(DBHelper.__execAsync(db, stmt));
+        });
 
-            // join table to associate principals to roles
-            this.db.run('CREATE TABLE if not exists principals_roles (principal_id INTEGER, role_id INTEGER)');
-            this.db.run('CREATE UNIQUE INDEX principals_roles_ndx on roles (principal_id, role_id)');
+        return Promise.all(promises).
+            then(results => {
+            if (nextStmts) {
+                return DBHelper.__execAllAsync(db, nextStmts, null);
+            } 
+        }).
+            catch(err => {
+            console.log(`!!!!Async statements failed due to ${err}!!!!`);
+        });
+    }
 
-            // claims to check
-            this.db.run('CREATE TABLE if not exists claims (realm_id INTEGER, action TEXT, resource TEXT, condition TEXT)');
-            this.db.run('CREATE UNIQUE INDEX claims_ndx on roles (realm_id, action, resource, condition)');
-
-            // claims can be associated to roles, which are associated to principals
-            this.db.run('CREATE TABLE if not exists roles_claims (role_id INTEGER, claim_id INTEGER)');
-            this.db.run('CREATE UNIQUE INDEX roles_claims_ndx on roles (role_id, claim_id)');
-
-            // claims can also be directly to principals (without roles)
-            this.db.run('CREATE TABLE if not exists principals_claims (principal_id INTEGER, claim_id INTEGER)');
-            this.db.run('CREATE UNIQUE INDEX principals_claims_ndx on roles (principal_id, claim_id)');
+    static __execAsync(db, stmt) {
+        return new Promise((resolve, reject) => {
+            db.run(stmt, (err) => {
+                if (err) {
+                    reject(new PersistenceError(`failed to execute ${stmt} due to ${err}`));
+                } else {
+                    resolve(stmt);
+                }
+            });
         });
     }
 
     close() {
         this.db.close();
-    }
-
-    query<T>(prefixQuery: string, criteria: Map<string, any>, options?: QueryOptions, mapper: (row: any) => T): Array<T> {
-        var query = criteria.size > 0 ? prefixQuery + ' where ' : prefixQuery;
-        var params = [];
-        criteria.forEach((k, v) => {
-            if (Array.isArray(v)) {
-                query += `${k} in (?) `;
-            } else {
-                query += `${k} = ? `;
-            }
-            params.push(v);
-        });
-        var result = [];
-        this.db.each(query, params, (err, row) => {
-            if (!err && row) {
-                result.push(mapper(row));
-            }
-        }); 
-        return result;
     }
 }

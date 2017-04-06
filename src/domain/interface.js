@@ -22,7 +22,7 @@ export interface Role {
 
     roleName: string;   // role-name 
 
-    parent?: Role;      // optional parent role
+    parents: Set<Role>; // set of claims
 
     claims: Set<Claim>; // set of claims
 }

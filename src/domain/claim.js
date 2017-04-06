@@ -16,9 +16,6 @@ export class ClaimImpl implements Claim {
 
     condition: string;  // This is optional for specifying runtime condition
 
-    constructor() {
-    }
-
     constructor(theId: number, 
                 theRealm: Realm, 
                 theAction: string, 

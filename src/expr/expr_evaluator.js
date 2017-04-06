@@ -7,9 +7,15 @@ import Parser                       from 'morph-expressions';
  * Default implementation of ConditionEvaluator using morph-expressions 
  * library.
  */
+// https://github.com/TechnologyAdvice/Jexl
+// https://github.com/abukurov/morph-expressions
 export class ConditionEvaluatorImpl implements ConditionEvaluator {
-    parser = new Parser();
+    parser: Parser;
 
+    constructor() {
+        this.parser = new Parser();
+
+    }
     /**
      * This method returns true if condition is true given context
      * 

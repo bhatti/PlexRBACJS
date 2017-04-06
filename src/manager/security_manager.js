@@ -2,6 +2,7 @@
 import type {SecurityManager}       from './interface';
 import type {ConditionEvaluator}    from '../expr/interface';
 import {SecurityAccessRequest}      from '../domain/security_access_request';
+import {AuthorizationError}         from '../domain/auth_error';
 import type {SecurityService}       from '../service/interface';
 
 /**
@@ -23,24 +24,28 @@ class SecurityManagerImpl implements SecurityManager {
      * @param {*} request - encapsulates request to check
      * @return - true if access is granted, false otherwise.
      */
-    check(request: SecurityAccessRequest): boolean {
-        let principal = this.securityService.getPrincipal(request.principalName);
-        let allClaims = principal.allClaims();
-        allClaims.forEach(claim => {
-            if (claim.implies(request.action, request.resource)) {
-                if (claim.hasCondition()) {
-                    if (this.conditionEvaluator.evaluate(claim.condition, request.context)) {
-                        console.log(`Granted conditional ${String(claim)} to ${request.principalName}`);
-                        return true;
+    check(request: SecurityAccessRequest): Promise<boolean> {
+        return this.securityService.getPrincipal(request.principalName).
+        then(principal => {
+            let allClaims = principal.allClaims();
+            allClaims.forEach(claim => {
+                if (claim.implies(request.action, request.resource)) {
+                    if (claim.hasCondition()) {
+                        if (this.conditionEvaluator.evaluate(claim.condition, request.context)) {
+                            console.log(`Granted conditional ${String(claim)} to ${request.principalName}`);
+                            return true;
+                        } else {
+                            console.log(`Failed to authorize ${String(claim)} to ${request.principalName}`);
+                        }                                                                                                              
                     } else {
-                        console.log(`Failed to authorize ${String(claim)} to ${request.principalName}`);
-                    }                                                                                                              
-                } else {
-                    console.log(`Granted ${String(claim)} to ${request.principalName}`);
-                    return true;
+                        console.log(`Granted ${String(claim)} to ${request.principalName}`);
+                        return true;
+                    }   
                 }   
-            }   
+            });
+            return false;
+        }).catch(err => {
+            throw new AuthorizationError(`Failed to authorize ${String(request)} due to ${err}`);
         });
-        return false;
     }
 }

@@ -39,25 +39,32 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principalName - to look
      * @return principal
      */
-    getPrincipal(principalName: string): Principal {
-        let principal = this.cache.get('principal', principalName, () => {
-            return this.principalRepository.findByName(principalName);
-        });
+    getPrincipal(principalName: string): Promise<Principal> {
+        let principal = this.cache.get('principal', principalName);
         if (principal) {
             return principal;
         }
-        throw new PersistenceError(`Could not find principal with name ${principalName}`);
-
+        return this.principalRepository.findByName(principalName).
+        then(principalFound => {
+            this.cache.set('principal', principalName, principalFound);
+            return principalFound;
+        }).catch(err => {
+            throw new PersistenceError(`Could not find principal with name ${principalName} due to ${err}`);
+        });
     }
 
     /**
      * This method saves principal
      * @param {*} principal - to save
      */
-    addPrincipal(principal: Principal): Principal {
-        let saved = this.principalRepository.save(principal);
-        this.cache.set('principal', principal.principalName, saved);
-        return saved;
+    addPrincipal(principal: Principal): Promise<Principal> {
+        return this.principalRepository.save(principal).
+        then(saved => {
+            this.cache.set('principal', principal.principalName, saved);
+            return saved;
+        }).catch(err => {
+            throw new PersistenceError(`Could not save principal ${String(principal)} due to ${err}`);
+        });
     }
 
     /**
@@ -65,10 +72,14 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principal - to remove
      * @return true if successfully removed
      */
-    removePrincipal(principal: Principal): boolean {
-        let removed = this.principalRepository.removeById(principal.id);
-        this.cache.remove('principal', principal.principalName);
-        return removed;
+    removePrincipal(principal: Principal): Promise<boolean> {
+        return this.principalRepository.removeById(principal.id).
+        then(removed => {
+            this.cache.remove('principal', principal.principalName);
+            return removed;
+        }).catch(err => {
+            return false;
+        });
     }
 
     /**
@@ -76,10 +87,14 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} realm - realm
      * @return - realm
      */
-    addRealm(realm: Realm): Realm {
-        let saved = this.realmRepository.save(realm);
-        this.cache.set('realm', realm.realmName, saved);
-        return saved;
+    addRealm(realm: Realm): Promise<Realm> {
+        return this.realmRepository.save(realm).
+        then(saved => {
+            this.cache.set('realm', realm.realmName, saved);
+            return saved;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add realm with name ${String(realm)} due to ${err}`); 
+        });
     }
 
     /**
@@ -87,14 +102,18 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} realmName - realm-name
      * @return - realm
      */
-    getRealm(realmName: string): Realm {
-        let realm = this.cache.get('realm', realmName, () => {
-            return this.realmRepository.findByName(realmName);
-        });
+    getRealm(realmName: string): Promise<Realm> {
+        let realm = this.cache.get('realm', realmName);
         if (realm) {
             return realm;
         }
-        throw new PersistenceError(`Could not find realm with name ${realmName}`);
+        return this.realmRepository.findByName(realmName).
+        then(realmFound => {
+            this.cache.set('realm', realmFound.realmName, realmFound);
+            return realmFound;
+        }).catch(err => {
+            throw new PersistenceError(`Could not find realm with name ${realmName} due to ${err}`);
+        });
     }
 
     /**
@@ -102,10 +121,14 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} role - to save
      * @return - saved role
      */
-    addRole(role: Role): Role {
-        let saved = this.roleRepository.save(role);
-        this.cache.set('role', role.roleName, saved);
-        return saved;
+    addRole(role: Role): Promise<Role> {
+        return this.roleRepository.save(role).
+        then(saved => {
+            this.cache.set('role', role.roleName, saved);
+            return saved;
+        }).catch(err => {
+            throw new PersistenceError(`Could not save role ${String(role)} due to ${err}`);
+        });
     }
 
     /**
@@ -113,9 +136,14 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} role - to delete
      * @return true if successfully removed
      */
-    removeRole(role: Role): boolean {
-        this.cache.remove('role', role.roleName);
-        return this.roleRepository.removeById(role.id);
+    removeRole(role: Role): Promise<boolean> {
+        return this.roleRepository.removeById(role.id).
+        then(removed => {
+            this.cache.remove('role', role.roleName);
+            return removed ;
+        }).catch(err => {
+            return false;
+        });
     }
 
     /**
@@ -123,9 +151,14 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principal
      * @param {*} role
      */
-    addRoleToPrincipal(principal: Principal, role: Role): void {
-        this.roleRepository.addRoleToPrincipal(principal, role);
-        this.cache.set('principal', principal.principalName, principal);
+    addRoleToPrincipal(principal: Principal, role: Role): Promise<void> {
+        return this.roleRepository.addRoleToPrincipal(principal, role).
+        then( () => {
+            this.cache.set('principal', principal.principalName, principal);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add role ${String(role)} to principal ${String(principal)} due to ${err}`);
+        });
     }
 
     /**
@@ -133,17 +166,27 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principal
      * @param {*} role
      */
-    removeRoleFromPrincipal(principal: Principal, role: Role): void {
-        this.roleRepository.removeRoleFromPrincipal(principal, role);
-        this.cache.set('principal', principal.principalName, principal);
+    removeRoleFromPrincipal(principal: Principal, role: Role): Promise<void> {
+        return this.roleRepository.removeRoleFromPrincipal(principal, role).
+        then(result  => {
+            this.cache.set('principal', principal.principalName, principal);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not remove role ${String(role)} to principal ${String(principal)} due to ${err}`);
+        });
     }
 
     /**
      * This method adds claim
      * @param {*} claim - to save
      */
-    addClaim(claim: Claim): Claim {
-        return this.claimRepository.save(claim);
+    addClaim(claim: Claim): Promise<Claim> {
+        return this.claimRepository.save(claim).
+        then( saved => {
+            return saved;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add claim ${String(claim)} due to ${err}`);
+        });
     }
 
     /**
@@ -151,54 +194,90 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} claim
      * @return true if successfully removed
      */
-    removeClaim(claim: Claim): boolean {
-        return this.claimRepository.removeById(claim.id);
+    removeClaim(claim: Claim): Promise<boolean> {
+        return this.claimRepository.removeById(claim.id).
+        then(removed => {
+            return removed;
+        });
     }
 
     /**
      * This method adds claims to principal
      */
-    addClaimToPrincipal(principal: Principal, claim: Claim): void {
-        this.claimRepository.addClaimToPrincipal(principal, claim);
-        this.cache.set('principal', principal.principalName, principal);
+    addClaimToPrincipal(principal: Principal, claim: Claim): Promise<void> {
+        return this.claimRepository.addClaimToPrincipal(principal, claim).
+        then( () => {
+            this.cache.set('principal', principal.principalName, principal);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add claim ${String(claim)} to ${String(principal)} due to ${err}`);
+        });
     }
 
     /**
      * This method adds claims to role
      */
-    addClaimToRole(role: Role, claim: Claim): void {
-        this.claimRepository.addClaimToRole(role, claim);
+    addClaimToRole(role: Role, claim: Claim): Promise<void> {
+        return this.claimRepository.addClaimToRole(role, claim).
+        then( () => {
+            this.cache.set('role', role.roleName, role);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add claim ${String(claim)} to ${String(role)} due to ${err}`);
+        });
     }
 
    /**
      * This method removes claims from principal
      */
-    removeClaimFromPrincipal(principal: Principal, claim: Claim) {
-        this.claimRepository.removeClaimFromPrincipal(principal, claim);
-        this.cache.set('principal', principal.principalName, principal);
+    removeClaimFromPrincipal(principal: Principal, claim: Claim): Promise<void> {
+        return new Promise((resolve, reject) => {
+            this.claimRepository.removeClaimFromPrincipal(principal, claim).
+            then( () => {
+                this.cache.set('principal', principal.principalName, principal);
+                resolve();
+            }).catch(err => {
+                reject(err);
+            });
+        });
     }
 
     /**
      * This method remove claims from role
      */
-    removeClaimFromRole(role: Role, claim: Claim) {
-        this.claimRepository.removeClaimFromRole(role, claim);
-        this.cache.set('role', role.roleName, role);
+    removeClaimFromRole(role: Role, claim: Claim) : Promise<void> {
+        return this.claimRepository.removeClaimFromRole(role, claim).
+        then( () => {
+            this.cache.set('role', role.roleName, role);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not remove claim ${String(claim)} from ${String(role)} due to ${err}`);
+        });
     }
 
     /**
      * This method loads claims for given principal
      */
-    loadPrincipalClaims(principal: Principal): void {
-        this.claimRepository.loadPrincipalClaims(principal);
-        this.cache.set('principal', principal.principalName, principal);
+    loadPrincipalClaims(principal: Principal): Promise<void> {
+        return this.claimRepository.loadPrincipalClaims(principal).
+        then( () => {
+            this.cache.set('principal', principal.principalName, principal);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not load claims for ${String(principal)} due to ${err}`);
+        });
     }
 
     /**
      * This method loads claims for given role
      */
-    loadRoleClaims(role: Role): void {
-        this.claimRepository.loadRoleClaims(role);
-        this.cache.set('role', role.roleName, role);
+    loadRoleClaims(role: Role): Promise<void> {
+        return this.claimRepository.loadRoleClaims(role).
+        then( () => {
+            this.cache.set('role', role.roleName, role);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not load claims for ${String(role)} due to ${err}`);
+        });
     }
 }

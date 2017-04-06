@@ -10,10 +10,19 @@ export interface SecurityCache {
      * 
      * @param {*} scope - scope for value
      * @param {*} key - key for the value
+     * @return - cache value
+     */
+    get<T>(scope: string, key: string): ?T;
+
+    /**
+     * This method returns cache value and loads if not available
+     * 
+     * @param {*} scope - scope for value
+     * @param {*} key - key for the value
      * @param {*} dataLoader - is called if value is not present
      * @return - cache value
      */
-    get<T>(scope: string, key: string, dataLoader: (string) => ?T): ?T;
+    getOrLoad<T>(scope: string, key: string, dataLoader: (string) => ?T): ?T;
 
     /**
      * This method adds value to cache 

@@ -18,10 +18,21 @@ export class DefaultSecurityCache implements SecurityCache {
      * 
      * @param {*} scope - scope for value
      * @param {*} key - key for the value
+     * @return - cache value
+     */
+    get<T>(scope: string, key: string): ?T {
+        return this.cache.get(scope + key);
+    }
+
+    /**
+     * This method returns cache value or will load value
+     * 
+     * @param {*} scope - scope for value
+     * @param {*} key - key for the value
      * @param {*} dataLoader - is called if value is not present
      * @return - cache value
      */
-    get<T>(scope: string, key: string, dataLoader: (string) => ?T): ?T {
+    getOrLoad<T>(scope: string, key: string, dataLoader: (string) => ?T): ?T {
         let value = this.cache.get(scope + key);
         if (!value) {
             value = dataLoader(key);

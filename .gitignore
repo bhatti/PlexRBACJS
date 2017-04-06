@@ -10,6 +10,7 @@ yarn.lock
 *.air
 *.ipa
 *.apk 
-
+.nyc_output
+coverage
 public
 node_modules

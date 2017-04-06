@@ -11,5 +11,5 @@ export interface SecurityManager {
      * @param {*} request - encapsulates request to check
      * @return - true if access is granted, false otherwise.
      */
-    check(request: SecurityAccessRequest): boolean;
+    check(request: SecurityAccessRequest): Promise<boolean>;
 }

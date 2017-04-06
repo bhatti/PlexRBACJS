@@ -14,21 +14,17 @@ export class RoleImpl implements Role {
 
     claims: Set<Claim>; // set of claims
 
-    parent: Role;       // optional parent role
+    parents: Set<Role>; // optional parent role
     
-    constructor() {
-    }
-
     constructor(theId: number, 
                 theRealm: Realm,
-                theRoleName: string,
-                theParent: Role) {
+                theRoleName: string) {
         //
-        this.id = theId;
-        this.realm = theRealm;
-        this.roleName = theRoleName;
-        this.parent = theParent;
-        this.claims = new Set();
+        this.id         = theId;
+        this.realm      = theRealm;
+        this.roleName   = theRoleName;
+        this.claims     = new Set();
+        this.parents    = new Set();
     }
 
     /**
