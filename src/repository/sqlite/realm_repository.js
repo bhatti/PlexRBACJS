@@ -18,12 +18,11 @@ export class RealmRepositorySqlite implements RealmRepository {
     sqlPrefix:  string;
 
     constructor(theDBHelper: DBHelper) {
+        if (!theDBHelper) {
+            throw new PersistenceError('db-helper not specified');
+        }
         this.dbHelper = theDBHelper;
         this.sqlPrefix = 'SELECT rowid AS id, realm_name FROM realms';
-    }
-
-    rowToRealm(row: any): Promise<Realm> {
-        return Promise.resolve(new RealmImpl(row.id, row.realm_name));
     }
 
     /**
@@ -31,13 +30,16 @@ export class RealmRepositorySqlite implements RealmRepository {
      * @param {*} id - database id
      */
     findById(id: number): Promise<Realm> {
+        if (!id) {
+            return Promise.reject(new PersistenceError('realm-id not specified'));
+        }
         let db = this.dbHelper.db;
         return new Promise((resolve, reject) => {
             db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find realm with id ${id} due to ${err}`));
                 } else if (row) {
-                    this.rowToRealm(row).
+                    this.__rowToRealm(row).
                         then(realm => {
                         resolve(realm);
                     });
@@ -53,13 +55,16 @@ export class RealmRepositorySqlite implements RealmRepository {
      * @param {*} realmName
      */
     findByName(realmName: string): Promise<Realm> {
+        if (!realmName) {
+            return Promise.reject(new PersistenceError('realmName not specified'));
+        }
         let db = this.dbHelper.db;
         return new Promise((resolve, reject) => {
             db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find realm with name ${realmName}`));
                 } else if (row) {
-                    this.rowToRealm(row).
+                    this.__rowToRealm(row).
                         then(realm => {
                         resolve(realm);
                     });
@@ -75,6 +80,9 @@ export class RealmRepositorySqlite implements RealmRepository {
      * @param {*} realm - to save
      */
     save(realm: Realm): Promise<Realm> {
+        if (!realm) {
+            return Promise.reject(new PersistenceError('realm not specified'));
+        }
         if (realm.id) {
             throw new PersistenceError(`Realm is immutable and cannot be updated ${String(realm)}`);
         } else {
@@ -102,7 +110,7 @@ export class RealmRepositorySqlite implements RealmRepository {
      * @param {*} id - database id
      */
     removeById(id: number): Promise<boolean> {
-        throw new PersistenceError(`Realm is immutable and cannot be deleted ${id}`);
+        return Promise.reject(new PersistenceError(`Realm is immutable and cannot be deleted ${id}`));
     }
 
     /**
@@ -111,7 +119,12 @@ export class RealmRepositorySqlite implements RealmRepository {
     search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>> {
         let q:QueryHelper<Realm> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, row => {
-             return this.rowToRealm(row);
+             return this.__rowToRealm(row);
          }, options);
     }
+
+    __rowToRealm(row: any): Promise<Realm> {
+        return Promise.resolve(new RealmImpl(row.id, row.realm_name));
+    }
+
 }

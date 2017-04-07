@@ -5,14 +5,17 @@
  * AuthorizationError defines error that is thrown upon claim/permission fails
  */
 export class AuthorizationError extends Error {
-    principalName: string;
-    action: string;
-    resource: string;
-    context: Map<string, any>;
+    principalName:  string;
+    action:         string;
+    resource:       string;
+    context:        Map<string, any>;
 
-    constructor(message: string, thePrincipalName?: string = '',
-                theAction?:string = '', theResource?: string = '',
+    constructor(message: string, 
+                thePrincipalName?: string = '',
+                theAction?:string = '', 
+                theResource?: string = '',
                 theContext: Map<string, any> = new Map()) {
+        //
         super(message);
         this.principalName = thePrincipalName;
         this.action = theAction;

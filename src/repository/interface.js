@@ -92,6 +92,12 @@ export interface RoleRepository extends Repository<Role> {
     findById(id: number): Promise<Role>; 
 
     /**
+     * This method finds role by name
+     * @param {*} roleName
+     */
+    findByName(roleName: string): Promise<Role>; 
+
+    /**
      * This method saves object and returns updated object
      * @param {*} role - to save
      */
@@ -126,6 +132,16 @@ export interface RoleRepository extends Repository<Role> {
      * This method loads roles for principal 
      */
     loadPrincipalRoles(principal: Principal): Promise<void>; 
+
+   /**
+     * This method adds set of roles as parent
+     */
+    addParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+
+    /**
+     * This method remove set of roles as parent
+     */
+    removeParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
 }
 
 /**

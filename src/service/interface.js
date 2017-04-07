@@ -89,6 +89,16 @@ export interface SecurityService {
     addClaimToPrincipal(principal: Principal, claim: Claim): Promise<void>; 
 
     /**
+     * This method adds set of roles as parent
+     */
+    addParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+
+    /**
+     * This method remove set of roles as parent
+     */
+    removeParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+
+    /**
      * This method adds claims to role
      */
     addClaimToRole(role: Role, claim: Claim): Promise<void>; 

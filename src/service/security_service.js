@@ -214,6 +214,41 @@ export class SecurityServiceImpl implements SecurityService {
         });
     }
 
+   /**
+     * This method adds set of roles as parent
+     */
+    addParentsToRole(role: Role, parents: Set<Role>): Promise<void> {
+        return this.roleRepository.addParentsToRole(role.parents).
+        then( () => {
+            parents.forEach(parent => {
+                role.parents.add(parent);
+            })
+            this.cache.set('role', role.roleName, role);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add parents ${String(parents)} to ${String(role)} due to ${err}`);
+        });
+        
+    }
+
+    /**
+     * This method remove set of roles as parent
+     */
+    removeParentsToRole(role: Role, parents: Set<Role>): Promise<void> {
+        return this.roleRepository.removeParentsToRole(role.parents).
+        then( () => {
+            parents.forEach(parent => {
+                role.parents.delete(parent);
+            })
+            this.cache.set('role', role.roleName, role);
+            return;
+        }).catch(err => {
+            throw new PersistenceError(`Could not add parents ${String(parents)} to ${String(role)} due to ${err}`);
+        });
+
+    }
+
+
     /**
      * This method adds claims to role
      */

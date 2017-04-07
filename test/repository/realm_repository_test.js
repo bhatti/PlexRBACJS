@@ -12,7 +12,8 @@ import {RealmImpl}                  from '../../src/domain/realm';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 
 describe('RealmRepository', function() {
-  let dbHelper: DBHelper;
+  let dbHelper:         DBHelper;
+  let realmRepository:  RealmRepositorySqlite;
 
   before(function(done) {
     this.dbHelper = new DBHelper(':memory:');
@@ -21,6 +22,7 @@ describe('RealmRepository', function() {
         console.log(`trace ${trace}`);
     })
     //
+    this.realmRepository = new RealmRepositorySqlite(this.dbHelper);
     this.dbHelper.createTables(() => {
       done();
     });
@@ -33,8 +35,7 @@ describe('RealmRepository', function() {
 
   describe('#saveGetById', function() {
     it('should not be able to get realm by id without saving', function(done) {
-        let repository = new RealmRepositorySqlite(this.dbHelper);
-        repository.findById(1000).
+        this.realmRepository.findById(1000).
             then(realm => {
             done(new Error('should fail'));
         }).catch(err => {
@@ -45,40 +46,35 @@ describe('RealmRepository', function() {
 
   describe('#saveGetById', function() {
     it('should be able to get realm by id after saving', function(done) {
-        let repository = new RealmRepositorySqlite(this.dbHelper);
-        repository.save(new RealmImpl(null, 'mydomain')).
+        this.realmRepository.save(new RealmImpl(null, 'mydomain')).
             then(saved => {
-            repository.findById(saved.id).
-                then(realm => {
-                assert.equal('mydomain', realm.realmName);
-                done();
-            }).catch(err => {
-                done(err);
-            });
+            return this.realmRepository.findById(saved.id);
+        }).then(realm => {
+            assert.equal('mydomain', realm.realmName);
+            done();
+        }).catch(err => {
+            done(err);
         });
     });
   });
 
   describe('#saveGetByName', function() {
     it('should be able to get realm by name after saving', function(done) {
-        let repository = new RealmRepositorySqlite(this.dbHelper);
-        repository.save(new RealmImpl(null, 'anotherdomain')).
+        this.realmRepository.save(new RealmImpl(null, 'anotherdomain')).
             then(saved => {
-            repository.findByName('anotherdomain').
-                then(realm => {
-                assert.equal('anotherdomain', realm.realmName);
-                done();
-            }).catch(err => {
-                done(err);
-            });
+            return this.realmRepository.findByName('anotherdomain');
+        }).then(realm => {
+            assert.equal('anotherdomain', realm.realmName);
+            done();
+        }).catch(err => {
+            done(err);
         });
     });
   });
 
   describe('#saveGetByName', function() {
     it('should not be able to get realm by unknown name', function(done) {
-        let repository = new RealmRepositorySqlite(this.dbHelper);
-        repository.findByName('unknown-domain').
+        this.realmRepository.findByName('unknown-domain').
             then(realm => {
             done(new Error('should fail'));
         }).catch(err => {
@@ -89,13 +85,23 @@ describe('RealmRepository', function() {
 
   describe('#search', function() {
     it('should be able to search domain by name', function(done) {
-        let repository  = new RealmRepositorySqlite(this.dbHelper);
         let criteria    = new Map();
         criteria.set('realm_name', 'mydomain');
-        repository.search(criteria).
+        this.realmRepository.search(criteria).
             then(results => {
             assert.equal(1, results.length);
             assert.equal('mydomain', results[0].realmName);
+            done();
+        });
+    });
+  }); 
+
+  describe('#removeById', function() {
+    it('should fail', function(done) {
+        this.realmRepository.removeById(1).
+        then(result => {
+            done(new Error(`should fail ${result}`));
+        }).catch(err => {
             done();
         });
     });
