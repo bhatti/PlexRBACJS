@@ -103,12 +103,14 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
             throw new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`);
         } else {
             return new Promise((resolve, reject) => {
-				let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?)');
-                stmt.run(principal.principalName);
-                stmt.finalize(() => {
-                    this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                        principal.id = row.lastID;
-                        resolve(principal);
+                this.dbHelper.db.serialize(() => {
+                    let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?)');
+                    stmt.run(principal.principalName);
+                    stmt.finalize(() => {
+                        this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
+                            principal.id = row.lastID;
+                            resolve(principal);
+                        });
                     });
                 });
             });

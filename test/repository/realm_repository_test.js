@@ -10,6 +10,7 @@ import {DBHelper}                   from '../../src/repository/sqlite/db_helper'
 import {QueryOptions}               from '../../src/repository/interface';
 import {RealmImpl}                  from '../../src/domain/realm';
 import {PersistenceError}           from '../../src/repository/persistence_error';
+import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
 describe('RealmRepository', function() {
   let dbHelper:         DBHelper;
@@ -22,7 +23,7 @@ describe('RealmRepository', function() {
         console.log(`trace ${trace}`);
     })
     //
-    this.realmRepository = new RealmRepositorySqlite(this.dbHelper);
+    this.realmRepository = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
     this.dbHelper.createTables(() => {
       done();
     });
@@ -31,6 +32,10 @@ describe('RealmRepository', function() {
   after(function(done) {
     this.dbHelper.close();
     done();
+  });
+
+  beforeEach(function() {
+    this.realmRepository.cache.clear();
   });
 
   describe('#saveGetById', function() {

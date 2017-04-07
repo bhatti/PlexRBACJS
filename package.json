@@ -8,7 +8,7 @@
 		"flow": "flow check",
 		"build": "webpack",
 		"mocha": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill --recursive",
-		"test": "nyc --reporter=html --reporter=text mocha --timeout=3000 --recursive --compilers js:babel-register",
+		"test": "nyc --reporter=html --reporter=text mocha --timeout=4000 --recursive --compilers js:babel-register",
         "coverage": "nyc report --reporter=text-lcov | coveralls"
 	},
 	"dependencies": {

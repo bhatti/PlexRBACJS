@@ -14,6 +14,8 @@ import {QueryOptions}               from '../../src/repository/interface';
 import {RoleImpl}                   from '../../src/domain/role';
 import {RealmImpl}                  from '../../src/domain/realm';
 import {PersistenceError}           from '../../src/repository/persistence_error';
+import {DefaultSecurityCache}       from '../../src/cache/security_cache';
+
 
 describe('RoleRepository', function() {
   let dbHelper:         DBHelper;
@@ -27,9 +29,10 @@ describe('RoleRepository', function() {
     this.dbHelper.db.on('trace', function(trace){
         console.log(`trace ${trace}`);
     })
-    this.realmRepository     = new RealmRepositorySqlite(this.dbHelper);
+    //
+    this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
     this.claimRepository     = new ClaimRepositorySqlite(this.dbHelper, this.realmRepository);
-    this.roleRepository      = new RoleRepositorySqlite(this.dbHelper, this.realmRepository, this.claimRepository);
+    this.roleRepository      = new RoleRepositorySqlite(this.dbHelper, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
     //
     this.dbHelper.createTables(() => {
       done();
@@ -93,7 +96,7 @@ describe('RoleRepository', function() {
         then(realm => {
             return this.roleRepository.save(new RoleImpl(null, realm, 'manager-role'));
         }).then(saved => {
-            return this.roleRepository.findByName(saved.roleName);
+            return this.roleRepository.findByName(saved.realm, saved.roleName);
         }).then(role => {
             assert.equal('manager-role', role.roleName);
             assert.equal('another-domain', role.realm.realmName);
@@ -106,7 +109,7 @@ describe('RoleRepository', function() {
 
   describe('#saveGetByName', function() {
     it('should not be able to get role by unknown name', function(done) {
-        this.roleRepository.findByName('unknown-role').
+        this.roleRepository.findByName(null, 'unknown-role').
             then(role => {
             done(new Error('should fail'));
         }).catch(err => {
@@ -114,6 +117,79 @@ describe('RoleRepository', function() {
         });
     });
   });
+
+  describe('#addParentsToRole', function() {
+    it('should be able to add roles as parents', function(done) {
+        let parentNames = ['tech-support', 'senior-tech-support', 'receptionist'];
+        let newRoleName = ['tech-manager'];
+        let allRoles = [...parentNames, ...newRoleName];
+        //
+        this.realmRepository.save(new RealmImpl(null, 'parent-add-domain')).
+        then(realm => {
+            return Promise.all(allRoles.map(name => {
+                return this.roleRepository.save(new RoleImpl(null, realm, name))
+            }));
+        }).then(saved => {
+            let parents = new Set([saved[0], saved[1], saved[2]]);
+            let role = saved[3];
+            return this.roleRepository.addParentsToRole(role, parents).
+            then(updated => {
+                return this.roleRepository.findById(role.id);
+            });
+        }).then(role => {
+            let parents = [];
+            role.parents.forEach(p => {
+                parents.push(p.roleName);
+            });
+            assert.equal('tech-manager', role.roleName);
+            assert.equal(3, parents.length);
+            assert.ok(parents.includes('receptionist'), `Could not find receptionist in ${parents}`);
+            assert.ok(parents.includes('tech-support'), `Could not find tech-support in ${parents}`);
+            assert.ok(parents.includes('senior-tech-support'), `Could not find senior-tech-support in ${parents}`);
+            done();
+        }).catch(err => {
+            done(err);
+        });
+    });
+  });
+
+
+ describe('#removeParentsToRole', function() {
+    it('should be able to remove roles as parents', function(done) {
+        let parentNames = ['tech-support', 'senior-tech-support', 'receptionist'];
+        let newRoleName = ['tech-manager'];
+        let allRoles = [...parentNames, ...newRoleName];
+        //
+        this.realmRepository.save(new RealmImpl(null, 'remove-parent-add-domain')).
+        then(realm => {
+            return Promise.all(allRoles.map(name => {
+                return this.roleRepository.save(new RoleImpl(null, realm, name))
+            }));
+        }).then(saved => {
+            let parents = new Set([saved[0], saved[1], saved[2]]);
+            let role = saved[3];
+            return this.roleRepository.addParentsToRole(role, parents).
+            then(updated => {
+                return this.roleRepository.removeParentsFromRole(role, new Set([saved[0]]));
+            }).then(updated => {
+                return this.roleRepository.findById(role.id);
+            });
+        }).then(role => {
+            let parents = [];
+            role.parents.forEach(p => {
+                parents.push(p.roleName);
+            });
+            assert.equal(2, parents.length, `Unexpected size in ${parents}`);
+            assert.equal('tech-manager', role.roleName);
+            assert.ok(parents.includes('receptionist'), `Could not find receptionist in ${parents}`);
+            assert.ok(parents.includes('senior-tech-support'), `Could not find senior-tech-support in ${parents}`);
+            done();
+        }).catch(err => {
+            done(err);
+        });
+    });
+  });
+
 
   describe('#search', function() {
     it('should be able to search domain by name', function(done) {

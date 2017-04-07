@@ -8,6 +8,7 @@ import {RealmImpl}              from '../../domain/realm';
 import {PersistenceError}       from '../persistence_error';
 import {DBHelper}               from './db_helper';
 import {QueryHelper}            from './query_helper';
+import type {SecurityCache}     from '../../cache/interface';
 
 /**
  * RealmRepositorySqlite implements RealmRepository by defining data access 
@@ -16,12 +17,14 @@ import {QueryHelper}            from './query_helper';
 export class RealmRepositorySqlite implements RealmRepository {
     dbHelper:   DBHelper;
     sqlPrefix:  string;
+    cache:      SecurityCache;
 
-    constructor(theDBHelper: DBHelper) {
+    constructor(theDBHelper: DBHelper, theCache: SecurityCache) {
         if (!theDBHelper) {
             throw new PersistenceError('db-helper not specified');
         }
         this.dbHelper = theDBHelper;
+        this.cache = theCache;
         this.sqlPrefix = 'SELECT rowid AS id, realm_name FROM realms';
     }
 
@@ -33,6 +36,11 @@ export class RealmRepositorySqlite implements RealmRepository {
         if (!id) {
             return Promise.reject(new PersistenceError('realm-id not specified'));
         }
+        let cached = this.cache.get('realm', `id_${id}`);
+        if (cached) {
+            return Promise.resolve(cached);
+        }
+        //
         let db = this.dbHelper.db;
         return new Promise((resolve, reject) => {
             db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
@@ -41,6 +49,7 @@ export class RealmRepositorySqlite implements RealmRepository {
                 } else if (row) {
                     this.__rowToRealm(row).
                         then(realm => {
+                        this.cache.set('realm', `id_${id}`, realm);
                         resolve(realm);
                     });
                 } else {
@@ -58,6 +67,11 @@ export class RealmRepositorySqlite implements RealmRepository {
         if (!realmName) {
             return Promise.reject(new PersistenceError('realmName not specified'));
         }
+        let cached = this.cache.get('realm', realmName);
+        if (cached) {
+            return Promise.resolve(cached);
+        }
+
         let db = this.dbHelper.db;
         return new Promise((resolve, reject) => {
             db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
@@ -66,6 +80,7 @@ export class RealmRepositorySqlite implements RealmRepository {
                 } else if (row) {
                     this.__rowToRealm(row).
                         then(realm => {
+                        this.cache.set('realm', realmName, realm);
                         resolve(realm);
                     });
                 } else {
@@ -89,16 +104,20 @@ export class RealmRepositorySqlite implements RealmRepository {
             let db = this.dbHelper.db;
             //
             return new Promise((resolve, reject) => {
-                let stmt = db.prepare('INSERT INTO realms VALUES (?)');
-                stmt.run(realm.realmName);
-                stmt.finalize(() => {
-                    db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                        realm.id = row.lastID;
-                        if (err) {
-                            reject(new PersistenceError(`Could not add ${String(realm)} due to ${err}`));
-                        } else {
-                            resolve(realm);
-                        }
+                this.dbHelper.db.serialize(() => {
+                    let stmt = db.prepare('INSERT INTO realms VALUES (?)');
+                    stmt.run(realm.realmName);
+                    stmt.finalize(() => {
+                        db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
+                            realm.id = row.lastID;
+                            if (err) {
+                                reject(new PersistenceError(`Could not add ${String(realm)} due to ${err}`));
+                            } else {
+                                this.cache.set('realm', `id_${realm.id}`, realm);
+                                this.cache.set('realm', realm.realmName, realm);
+                                resolve(realm);
+                            }
+                        });
                     });
                 });
             });

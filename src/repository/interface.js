@@ -93,9 +93,10 @@ export interface RoleRepository extends Repository<Role> {
 
     /**
      * This method finds role by name
+     * @param {*} realm
      * @param {*} roleName
      */
-    findByName(roleName: string): Promise<Role>; 
+    findByName(realm: Realm, roleName: string): Promise<Role>; 
 
     /**
      * This method saves object and returns updated object
@@ -136,12 +137,12 @@ export interface RoleRepository extends Repository<Role> {
    /**
      * This method adds set of roles as parent
      */
-    addParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+    addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>; 
 
     /**
      * This method remove set of roles as parent
      */
-    removeParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+    removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>; 
 }
 
 /**

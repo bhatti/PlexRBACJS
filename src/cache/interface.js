@@ -40,4 +40,9 @@ export interface SecurityCache {
      * @param {*} key - key for the value
      */
     remove(scope: string, key: string): void;
+
+    /**
+     * This method clears all cache
+     */
+    clear(): void;
 }

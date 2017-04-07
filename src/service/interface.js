@@ -91,12 +91,12 @@ export interface SecurityService {
     /**
      * This method adds set of roles as parent
      */
-    addParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+    addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>; 
 
     /**
      * This method remove set of roles as parent
      */
-    removeParentsToRole(role: Role, parents: Set<Role>): Promise<void>; 
+    removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>; 
 
     /**
      * This method adds claims to role

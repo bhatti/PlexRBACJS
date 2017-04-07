@@ -22,24 +22,19 @@ export class QueryHelper<T> {
         var query = criteria.size > 0 ? prefixQuery + ' WHERE ' : prefixQuery;
         var params = [];
         criteria.forEach((v, k) => {
-            if (Array.isArray(v)) {
-                query += `${k} in (?) `;
-            } else {
-                query += `${k} = ? `;
-            }
+            query += `${k} = ? `;
             params.push(v);
         });
         //
         return new Promise((resolve, reject) => {
             this.db.all(query, params, (err, rows) => {
                 if (err) {
-                    console.log(`---------->>>>>>>>>>>query ${query} failed due to ${err}`);
                     reject(err);
                 } else if (rows) {
                     var resultPromises = [];
                     rows.forEach(row => {
+                        //console.log(`----------!!!!query got ${JSON.stringify(row)} -- from ${query}`);
                         let promise = mapper(row);
-                        console.log(`----------!!!!query got ${JSON.stringify(row)}`);
                         resultPromises.push(promise);
                     });
                     return Promise.all(resultPromises).

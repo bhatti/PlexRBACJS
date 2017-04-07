@@ -1,15 +1,17 @@
 /*@flow*/
 
 import type {SecurityCache}    from './interface';
+const assert = require('assert');
+
 
 /**
  * Default implementation of SecurityCache 
  */
 export class DefaultSecurityCache implements SecurityCache {
-    cache: WeakMap<string, any>;
+    cache: Map<string, any>;
 
     constructor() {
-        this.cache = new WeakMap();
+        this.cache = new Map(); // TODO add LRU and eviction
     }
 
 
@@ -21,7 +23,9 @@ export class DefaultSecurityCache implements SecurityCache {
      * @return - cache value
      */
     get<T>(scope: string, key: string): ?T {
-        return this.cache.get(scope + key);
+        assert(scope.length > 0, 'scope not defined');
+        assert(key.length > 0, 'key not defined');
+        return this.cache.get(this.__toKey(scope, key));
     }
 
     /**
@@ -33,11 +37,13 @@ export class DefaultSecurityCache implements SecurityCache {
      * @return - cache value
      */
     getOrLoad<T>(scope: string, key: string, dataLoader: (string) => ?T): ?T {
+        assert(scope.length > 0, 'scope not defined');
+        assert(key.length > 0, 'key not defined');
         let value = this.cache.get(scope + key);
         if (!value) {
             value = dataLoader(key);
             if (value) {
-                this.cache.set(scope + key, value);
+                this.cache.set(this.__toKey(scope, key), value);
             }
         }
         return value;
@@ -51,7 +57,10 @@ export class DefaultSecurityCache implements SecurityCache {
      * @param {*} value 
      */
     set<T>(scope: string, key: string, value: T) {
-        this.cache.set(scope + key, value);
+        assert(scope.length > 0, 'scope not defined');
+        assert(key.length > 0, 'key not defined');
+        assert(value, 'value not defined');
+        this.cache.set(this.__toKey(scope, key), value);
     }
 
     /**
@@ -61,6 +70,17 @@ export class DefaultSecurityCache implements SecurityCache {
      * @param {*} key - key for the value
      */
     remove(scope: string, key: string): void {
-        this.cache.delete(scope + key);
+        this.cache.delete(this.__toKey(scope, key));
+    }
+
+    /**
+     * This method clears all cache
+     */
+    clear() {
+        this.cache.clear();
+    }
+
+    __toKey(scope: string, key: string): string {
+        return `${scope}:${key}`;
     }
 }

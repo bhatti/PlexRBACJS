@@ -6,15 +6,15 @@ import type {Claim, Role, Realm}   from './interface';
  * RoleImpl implements Role for defining function or job
  */
 export class RoleImpl implements Role {
-    id: number;         // unique database id
+    id:         number;         // unique database id
 
-    realm: Realm;       // realm for the application
+    realm:      Realm;          // realm for the application
 
-    roleName: string;   // role-name
+    roleName:   string;         // role-name
 
-    claims: Set<Claim>; // set of claims
+    claims:     Set<Claim>;     // set of claims
 
-    parents: Set<Role>; // optional parent role
+    parents:    Set<Role>;      // optional parent role
     
     constructor(theId: number, 
                 theRealm: Realm,

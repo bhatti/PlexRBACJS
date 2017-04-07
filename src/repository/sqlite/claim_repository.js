@@ -83,22 +83,24 @@ export class ClaimRepositorySqlite implements ClaimRepository {
             });
         } else {
             return new Promise((resolve, reject) => {
-				let stmt = db.prepare('INSERT INTO claims VALUES (?, ?, ?, ?)');
-				stmt.run(claim.realm.id, claim.action, claim.resource, claim.condition);
-				stmt.finalize((err) => {
-					if (err) {
-						reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
-					} else {
-						db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-							claim.id = row.lastID;
-							if (err) {
-								reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
-							} else {
-								resolve(claim);
-							}
-						});
-					}
-				});
+                db.serialize(() => {
+                    let stmt = db.prepare('INSERT INTO claims VALUES (?, ?, ?, ?)');
+                    stmt.run(claim.realm.id, claim.action, claim.resource, claim.condition);
+                    stmt.finalize((err) => {
+                        if (err) {
+                            reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
+                        } else {
+                            db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
+                                claim.id = row.lastID;
+                                if (err) {
+                                    reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
+                                } else {
+                                    resolve(claim);
+                                }
+                            });
+                        }
+                    });
+                });
             });
         }
     }
