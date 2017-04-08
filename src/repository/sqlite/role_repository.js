@@ -1,5 +1,7 @@
 /*@flow*/
 
+const assert = require('assert');
+
 import type {Principal}         from '../../domain/interface';
 import type {Realm}             from '../../domain/interface';
 import type {Role}              from '../../domain/interface';
@@ -29,18 +31,11 @@ export class RoleRepositorySqlite implements RoleRepository {
         theClaimRepository: ClaimRepository,
         theCache: SecurityCache) {
         //
-        if (!theDBHelper) {
-            throw new PersistenceError('db-helper not specified');
-        }
-        if (!theRealmRepository) {
-            throw new PersistenceError('realm-repository not specified');
-        }
-        if (!theClaimRepository) {
-            throw new PersistenceError('claim-repository not specified');
-        }
-        if (!theCache) {
-            throw new PersistenceError('cache not specified');
-        }
+        assert(theDBHelper, 'db-helper not specified');
+        assert(theRealmRepository, 'realm-repository not specified');
+        assert(theClaimRepository, 'claim-repository not specified');
+        assert(theCache, 'cache not specified');
+        //
         this.dbHelper           = theDBHelper;
         this.realmRepository    = theRealmRepository;
         this.claimRepository    = theClaimRepository;

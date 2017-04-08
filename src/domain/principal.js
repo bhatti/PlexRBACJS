@@ -1,40 +1,41 @@
 /*@flow*/
 
 import type {Principal, Claim, Role, Realm}     from './interface';
+const assert = require('assert');
+
 
 export class PrincipalImpl implements Principal {
     /**
      * unique database id
      */
-    id: number;
+    id:             number;
 
     /**
      * principal name such as username
      */
-    principalName: string;
+    principalName:  string;
 
     /**
      * realm for this principal
      */
-    realm: Realm;
+    realm:          Realm;
 
     /**
      * set of Claims
      */
-    claims: Set<Claim>;
+    claims:         Set<Claim>;
 
     /**
      * set of roles
      */
-    roles: Set<Role>;
-
-    constructor() {
-    }
+    roles:          Set<Role>;
 
     constructor(theId: number, 
                 theRealm: Realm, 
                 thePrincipalName: string) {
         //
+        assert(theRealm, 'realm is required');
+        assert(thePrincipalName, 'principal is required');
         this.id = theId;
         this.realm = theRealm;
         this.principalName = thePrincipalName;

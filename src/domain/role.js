@@ -1,6 +1,8 @@
 /*@flow*/
 
 import type {Claim, Role, Realm}   from './interface';
+const assert = require('assert');
+
 
 /**
  * RoleImpl implements Role for defining function or job
@@ -20,6 +22,9 @@ export class RoleImpl implements Role {
                 theRealm: Realm,
                 theRoleName: string) {
         //
+        assert(theRealm, 'realm is required');
+        assert(theRoleName, 'role-name is required');
+
         this.id         = theId;
         this.realm      = theRealm;
         this.roleName   = theRoleName;

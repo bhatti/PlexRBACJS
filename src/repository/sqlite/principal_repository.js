@@ -1,4 +1,5 @@
 /*@flow*/
+const assert = require('assert');
 
 import type {Principal}             from '../../domain/interface';
 import type {PrincipalRepository}   from '../interface';
@@ -9,7 +10,8 @@ import {QueryOptions}               from '../interface';
 import {PrincipalImpl}              from '../../domain/principal';
 import {PersistenceError}           from '../persistence_error';
 import {DBHelper}                   from './db_helper';
-import {QueryHelper}            from './query_helper';
+import {QueryHelper}                from './query_helper';
+import type {SecurityCache}         from '../../cache/interface';
 
 /**
  * PrincipalRepositorySqlite implements PrincipalRepository by defining 
@@ -20,27 +22,25 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
     realmRepository:    RealmRepository;
     roleRepository:     RoleRepository;
     claimRepository:    ClaimRepository;
-    sqlPrefix:string;
+    sqlPrefix:          string;
+    cache:              SecurityCache;
 
-    constructor(theDBHelper: DBHelper, theRealmRepository: RealmRepository,
-        theRoleRepository: RoleRepository, theClaimRepository: ClaimRepository) {
-        if (!theDBHelper) {
-            throw new PersistenceError('db-helper not specified');
-        }
-        if (!theRealmRepository) {
-            throw new PersistenceError('realm-repository not specified');
-        }
-        if (!theRoleRepository) {
-            throw new PersistenceError('role-repository not specified');
-        }
-        if (!theClaimRepository) {
-            throw new PersistenceError('claim-repository not specified');
-        }
+    constructor(theDBHelper: DBHelper, 
+        theRealmRepository: RealmRepository,
+        theRoleRepository: RoleRepository, 
+        theClaimRepository: ClaimRepository,
+        theCache: SecurityCache) {
+        assert(theDBHelper, 'db-helper not specified');
+        assert(theRealmRepository, 'realm-repository not specified');
+        assert(theRoleRepository, 'role-repository not specified');
+        assert(theClaimRepository, 'claim-repository not specified');
+        assert(theCache, 'cache not specified');
         this.dbHelper           = theDBHelper;
         this.realmRepository    = theRealmRepository;
         this.roleRepository     = theRoleRepository;
         this.claimRepository    = theClaimRepository;
-        this.sqlPrefix          = 'SELECT rowid AS id, principal_name FROM principals';
+        this.cache              = theCache;
+        this.sqlPrefix          = 'SELECT rowid AS id, principal_name, realm_id FROM principals';
     }
 
     /**
@@ -100,12 +100,16 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
             return Promise.reject(new PersistenceError('principal not specified'));
         }
         if (principal.id) {
-            throw new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`);
+            return Promise.reject(new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`));
+        }
+
+        if (!principal.realm.id) {
+            return Promise.reject(new PersistenceError(`Principal realm not specifyed`));
         } else {
             return new Promise((resolve, reject) => {
                 this.dbHelper.db.serialize(() => {
-                    let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?)');
-                    stmt.run(principal.principalName);
+                    let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
+                    stmt.run(principal.realm.id, principal.principalName);
                     stmt.finalize(() => {
                         this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
                             principal.id = row.lastID;

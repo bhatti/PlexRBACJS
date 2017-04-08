@@ -10,17 +10,17 @@ export class AuthorizationError extends Error {
     resource:       string;
     context:        Map<string, any>;
 
-    constructor(message: string, 
-                thePrincipalName?: string = '',
-                theAction?:string = '', 
-                theResource?: string = '',
-                theContext: Map<string, any> = new Map()) {
+    constructor(message:            string, 
+                thePrincipalName?:  string = '',
+                theAction?:         string = '', 
+                theResource?:       string = '',
+                theContext:         Map<string, any> = new Map()) {
         //
         super(message);
-        this.principalName = thePrincipalName;
-        this.action = theAction;
-        this.resource = theResource;
-        this.context = theContext;
+        this.principalName  = thePrincipalName;
+        this.action         = theAction;
+        this.resource       = theResource;
+        this.context        = theContext;
         //
         this.name = this.constructor.name;
         if (typeof Error.captureStackTrace === 'function') {

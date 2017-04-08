@@ -1,4 +1,5 @@
 /*@flow*/
+const assert = require('assert');
 
 /**
  * RoleImpl implements Role for defining function or job
@@ -20,11 +21,16 @@ export class SecurityAccessRequest {
                 theResource: string,
                 theContext: Map<string, any>) {
         //
-        this.realmName = theRealm;
-        this.principalName = thePrincipal;
-        this.action = theAction;
-        this.resource = theResource;
-        this.context = theContext;
+        assert(theRealm, 'realm is required');
+        assert(thePrincipal, 'principalis required');
+        assert(theAction, 'action is required');
+        assert(theResource, 'resource is required');
+        assert(theContext, 'context is required');
+        this.realmName      = theRealm;
+        this.principalName  = thePrincipal;
+        this.action         = theAction;
+        this.resource       = theResource;
+        this.context        = theContext;
     }
  
     /**

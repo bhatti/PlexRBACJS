@@ -6,9 +6,9 @@
  * realm.
  */
 export interface Realm {
-    id: number;         // unique database id
+    id:         number;  // unique database id
 
-    realmName: string;  // realm-name
+    realmName:  string;  // realm-name
 }
 
 /**
@@ -16,15 +16,15 @@ export interface Realm {
  * and specialized roles
  */
 export interface Role {
-    id: number;         // unique database id
+    id:         number;         // unique database id
 
-    realm: Realm;       // realm for the application
+    realm:      Realm;          // realm for the application
 
-    roleName: string;   // role-name 
+    roleName:   string;         // role-name 
 
-    parents: Set<Role>; // set of claims
+    parents:    Set<Role>;      // set of claims
 
-    claims: Set<Claim>; // set of claims
+    claims:     Set<Claim>;     // set of claims
 }
 
 /**
@@ -35,12 +35,12 @@ export interface Principal {
     /**
      * Unique database id
      */
-    id: number;
+    id:             number;
 
     /**
      * realm for the application
      */
-    realm: Realm;
+    realm:          Realm;
 
     /**
      * principal name such as username
@@ -50,14 +50,14 @@ export interface Principal {
     /**
      * set of claims
      */
-    claims: Set<Claim>;
+    claims:         Set<Claim>;
 
     /**
      * set of roles
      */
-    roles: Set<Role>;
+    roles:          Set<Role>;
 
-    allClaims(): Set<Claim>; 
+    allClaims():    Set<Claim>; 
 }
 
 /**
@@ -69,27 +69,27 @@ export interface Claim {
     /**
      * Unique database id
      */
-    id: number;
+    id:         number;
     
     /**
      * realm for the application
      */
-    realm: Realm;
+    realm:      Realm;
 
     /**
      * This can be a single operation or regex based multiple operations
      */
-    action: string;
+    action:     string;
 
     /**
      * target resource
      */
-    resource: string;
+    resource:   string;
 
     /**
      * This is optional for specifying runtime condition
      */
-    condition: string;
+    condition:  string;
 
     /**
      * This method checks if given action and resource matches internal action and action.

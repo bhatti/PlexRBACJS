@@ -1,6 +1,8 @@
 /*@flow*/
 
 import type {Realm}     from './interface';
+const assert = require('assert');
+
 
 /**
  * RealmImpl implements Realm for defining domain of the application
@@ -12,6 +14,7 @@ export class RealmImpl implements Realm {
     constructor(theId: number, 
                 theRealmName: string) {
         //
+        assert(theRealmName, 'realm is required');
         this.id = theId;
         this.realmName = theRealmName;
     }

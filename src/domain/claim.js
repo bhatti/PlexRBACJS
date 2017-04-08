@@ -2,31 +2,36 @@
 
 import type {Claim, Realm}      from './interface';
 
+const assert = require('assert');
+
 /**
  * ClaimImpl implements Claim for defining access attributes
  */
 export class ClaimImpl implements Claim {
-    id: number;         // unique database id
+    id:         number;     // unique database id
 
-    realm: Realm;       // realm for the application
+    realm:      Realm;      // realm for the application
 
-    action: string;     // This can be a single operation or regex based multiple operations
+    action:     string;     // This can be a single operation or regex based multiple operations
 
-    resource: string;   // target resource
+    resource:   string;     // target resource
 
-    condition: string;  // This is optional for specifying runtime condition
+    condition:  string;     // This is optional for specifying runtime condition
 
-    constructor(theId: number, 
-                theRealm: Realm, 
-                theAction: string, 
-                theResource: string, 
-                theCondition: string) {
+    constructor(theId:          number, 
+                theRealm:       Realm, 
+                theAction:      string, 
+                theResource:    string, 
+                theCondition:   string) {
         //
-        this.id = theId;
-        this.realm = theRealm;
-        this.action = theAction;
-        this.resource = theResource;
-        this.condition = theCondition;
+        assert(theRealm, 'realm is required');
+        assert(theAction, 'action is required');
+        assert(theResource, 'resource is required');
+        this.id         = theId;
+        this.realm      = theRealm;
+        this.action     = theAction;
+        this.resource   = theResource;
+        this.condition  = theCondition;
     }
 
     hasCondition(): boolean {

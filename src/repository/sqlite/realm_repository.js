@@ -1,5 +1,6 @@
 /*@flow*/
-var sqlite3 = require('sqlite3').verbose();
+const sqlite3   = require('sqlite3').verbose();
+const assert    = require('assert');
 
 import type {Realm}             from '../../domain/interface';
 import type {RealmRepository}   from '../interface';
@@ -20,9 +21,8 @@ export class RealmRepositorySqlite implements RealmRepository {
     cache:      SecurityCache;
 
     constructor(theDBHelper: DBHelper, theCache: SecurityCache) {
-        if (!theDBHelper) {
-            throw new PersistenceError('db-helper not specified');
-        }
+        assert(theDBHelper, 'db-helper not specified');
+        assert(theCache, 'cache not specified');
         this.dbHelper = theDBHelper;
         this.cache = theCache;
         this.sqlPrefix = 'SELECT rowid AS id, realm_name FROM realms';
