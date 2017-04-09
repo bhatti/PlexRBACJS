@@ -55,30 +55,30 @@ export interface RealmRepository extends Repository<Realm> {
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Realm>; 
+    findById(id: number): Promise<Realm>;
 
     /**
      * This method finds realm by name
      * @param {*} realmName
      */
-    findByName(realmName: string): Promise<Realm>; 
+    findByName(realmName: string): Promise<Realm>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} realm - to save
      */
-    save(realm: Realm): Promise<Realm>; 
+    save(realm: Realm): Promise<Realm>;
 
     /**
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean>; 
+    removeById(id: number): Promise<boolean>;
 
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>>; 
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>>;
 }
 
 /**
@@ -89,60 +89,60 @@ export interface RoleRepository extends Repository<Role> {
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Role>; 
+    findById(id: number): Promise<Role>;
 
     /**
      * This method finds role by name
-     * @param {*} realm
+     * @param {*} realmName
      * @param {*} roleName
      */
-    findByName(realm: Realm, roleName: string): Promise<Role>; 
+    findByName(realmName: string, roleName: string): Promise<Role>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} role - to save
      */
-    save(role: Role): Promise<Role>; 
+    save(role: Role): Promise<Role>;
 
     /**
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean>; 
+    removeById(id: number): Promise<boolean>;
 
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Role>>; 
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Role>>;
 
     /**
      * This method adds role to principal
      * @param {*} principal
-     * @param {*} role
+     * @param {*} roles
      */
-    addRoleToPrincipal(principal: Principal, role: Role): Promise<void>; 
+    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<*>;
 
     /**
      * This method removes role from principal
      * @param {*} principal
      * @param {*} role
      */
-    removeRoleFromPrincipal(principal: Principal, role: Role): Promise<void>;
+    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<*>;
 
     /**
-     * This method loads roles for principal 
+     * This method loads roles for principal
      */
-    loadPrincipalRoles(principal: Principal): Promise<void>; 
+    loadPrincipalRoles(principal: Principal): Promise<void>;
 
    /**
      * This method adds set of roles as parent
      */
-    addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>; 
+    addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>;
 
     /**
      * This method remove set of roles as parent
      */
-    removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>; 
+    removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>;
 }
 
 /**
@@ -153,44 +153,44 @@ export interface ClaimRepository extends Repository<Claim> {
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Claim>; 
+    findById(id: number): Promise<Claim>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} Claim - to save
      */
-    save(claim: Claim): Promise<Claim>; 
+    save(claim: Claim): Promise<Claim>;
 
     /**
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean>; 
+    removeById(id: number): Promise<boolean>;
 
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>>; 
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>>;
 
     /**
      * This method adds claims to principal
      */
-    addClaimToPrincipal(principal: Principal, claim: Claim): Promise<void>; 
+    addClaimToPrincipal(principal: Principal, claim: Claim): Promise<void>;
 
     /**
      * This method adds claims to role
      */
-    addClaimToRole(role: Role, claim: Claim): Promise<void>; 
+    addClaimToRole(role: Role, claim: Claim): Promise<void>;
 
    /**
      * This method removes claims from principal
      */
-    removeClaimFromPrincipal(principal: Principal, claim: Claim): Promise<void>; 
+    removeClaimFromPrincipal(principal: Principal, claim: Claim): Promise<void>;
 
     /**
      * This method remove claims from role
      */
-    removeClaimFromRole(role: Role, claim: Claim): Promise<void>; 
+    removeClaimFromRole(role: Role, claim: Claim): Promise<void>;
 
     /**
      * This method loads claims for given principal using claims associated with role and principal
@@ -200,7 +200,7 @@ export interface ClaimRepository extends Repository<Claim> {
     /**
      * This method load claims for role
      */
-    loadRoleClaims(role: Role): Promise<void>; 
+    loadRoleClaims(role: Role): Promise<void>;
 }
 
 /**
@@ -211,28 +211,29 @@ export interface PrincipalRepository extends Repository<Principal> {
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Principal>; 
+    findById(id: number): Promise<Principal>;
 
     /**
      * This method finds principal by name
+     * @param {*} realmName
      * @param {*} principalName
      */
-    findByName(principalName: string): Promise<Principal>; 
+    findByName(realmName: string, principalName: string): Promise<Principal>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} principal - to save
      */
-    save(principal: Principal): Promise<Principal>; 
+    save(principal: Principal): Promise<Principal>;
 
     /**
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean>; 
+    removeById(id: number): Promise<boolean>;
 
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Principal>>; 
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Principal>>;
 }

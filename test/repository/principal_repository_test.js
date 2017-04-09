@@ -27,12 +27,12 @@ describe('PrincipalRepository', function() {
   let realmRepository:      RealmRepositorySqlite;
   let roleRepository:       RoleRepositorySqlite;
   let principalRepository:  PrincipalRepositorySqlite;
- 
+
   before(function(done) {
     this.dbHelper = new DBHelper(':memory:');
     //this.dbHelper = new DBHelper('/tmp/test.db');
     this.dbHelper.db.on('trace', function(trace){
-        console.log(`trace ${trace}`);
+        //console.log(`trace ${trace}`);
     })
     //
     this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
@@ -96,6 +96,36 @@ describe('PrincipalRepository', function() {
   });
 
 
+  describe('#saveGetByName', function() {
+    it('should be able to get principal by name after saving', function(done) {
+        this.realmRepository.save(new RealmImpl(null, 'domain-x')).
+            then(realm => {
+            return this.principalRepository.save(new PrincipalImpl(null, realm, 'xuser'));
+        }).then(principal => {
+            this.principalRepository.findByName(principal.realm.realmName, principal.principalName).
+            then(loaded => {
+                assert.equal('xuser', loaded.principalName);
+                done();
+            }).catch(err => {
+                done(err);
+            });
+        }).catch(err => {
+            done(err);
+        });
+    });
+  });
+
+  describe('#saveGetByName', function() {
+    it('should not be able to get principal by unknown name', function(done) {
+        this.principalRepository.findByName('unknown-principal').
+            then(realm => {
+            done(new Error('should fail'));
+        }).catch(err => {
+            done();
+        });
+    });
+  });
+
   describe('#search', function() {
     it('should be able to search principal by name', function(done) {
         let criteria    = new Map();
@@ -107,7 +137,7 @@ describe('PrincipalRepository', function() {
             done();
         });
     });
-  }); 
+  });
 
   describe('#removeById', function() {
     it('should fail because of unknown id', function(done) {

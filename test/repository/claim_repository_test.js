@@ -25,7 +25,7 @@ describe('ClaimRepository', function() {
     this.dbHelper = new DBHelper(':memory:');
     //this.dbHelper = new DBHelper('/tmp/test.db');
     this.dbHelper.db.on('trace', function(trace){
-        console.log(`trace ${trace}`);
+        //console.log(`trace ${trace}`);
     })
     //
     this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());

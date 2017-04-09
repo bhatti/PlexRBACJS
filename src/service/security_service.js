@@ -6,13 +6,13 @@ import type {Role}                  from '../domain/interface';
 import type {ClaimRepository}       from '../repository/interface';
 import type {PrincipalRepository}   from '../repository/interface';
 import type {RealmRepository}       from '../repository/interface';
-import type {RoleRepository}        from '../repository/interface'; 
-import {PersistenceError}           from '../repository/persistence_error'; 
+import type {RoleRepository}        from '../repository/interface';
+import {PersistenceError}           from '../repository/persistence_error';
 import type {SecurityCache}         from '../cache/interface';
 import type {SecurityService}       from './interface';
 
 /**
- * SecurityServiceImpl implements SecurityService and provides access 
+ * SecurityServiceImpl implements SecurityService and provides access
  * to manage principals, roles, and claims
  */
 export class SecurityServiceImpl implements SecurityService {
@@ -22,7 +22,7 @@ export class SecurityServiceImpl implements SecurityService {
     roleRepository: RoleRepository;
     cache: SecurityCache;
 
-    constructor(theClaimRepository: ClaimRepository, 
+    constructor(theClaimRepository: ClaimRepository,
                 thePrincipalRepository: PrincipalRepository,
                 theRealmRepository: RealmRepository,
                 theRoleRepository: RoleRepository,
@@ -36,21 +36,12 @@ export class SecurityServiceImpl implements SecurityService {
 
     /**
      * This method retrieves principal by name
+     * @param {*} realmName - domain of application
      * @param {*} principalName - to look
      * @return principal
      */
-    getPrincipal(principalName: string): Promise<Principal> {
-        let principal = this.cache.get('principal', principalName);
-        if (principal) {
-            return principal;
-        }
-        return this.principalRepository.findByName(principalName).
-        then(principalFound => {
-            this.cache.set('principal', principalName, principalFound);
-            return principalFound;
-        }).catch(err => {
-            throw new PersistenceError(`Could not find principal with name ${principalName} due to ${err}`);
-        });
+    getPrincipal(realmName: string, principalName: string): Promise<Principal> {
+        return this.principalRepository.findByName(realmName, principalName);
     }
 
     /**
@@ -58,13 +49,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principal - to save
      */
     addPrincipal(principal: Principal): Promise<Principal> {
-        return this.principalRepository.save(principal).
-        then(saved => {
-            this.cache.set('principal', principal.principalName, saved);
-            return saved;
-        }).catch(err => {
-            throw new PersistenceError(`Could not save principal ${String(principal)} due to ${err}`);
-        });
+        return this.principalRepository.save(principal);
     }
 
     /**
@@ -73,28 +58,16 @@ export class SecurityServiceImpl implements SecurityService {
      * @return true if successfully removed
      */
     removePrincipal(principal: Principal): Promise<boolean> {
-        return this.principalRepository.removeById(principal.id).
-        then(removed => {
-            this.cache.remove('principal', principal.principalName);
-            return removed;
-        }).catch(err => {
-            return false;
-        });
+        return this.principalRepository.removeById(principal.id);
     }
 
     /**
-     * This method adds realm 
+     * This method adds realm
      * @param {*} realm - realm
      * @return - realm
      */
     addRealm(realm: Realm): Promise<Realm> {
-        return this.realmRepository.save(realm).
-        then(saved => {
-            this.cache.set('realm', realm.realmName, saved);
-            return saved;
-        }).catch(err => {
-            throw new PersistenceError(`Could not add realm with name ${String(realm)} due to ${err}`); 
-        });
+        return this.realmRepository.save(realm);
     }
 
     /**
@@ -103,17 +76,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @return - realm
      */
     getRealm(realmName: string): Promise<Realm> {
-        let realm = this.cache.get('realm', realmName);
-        if (realm) {
-            return realm;
-        }
-        return this.realmRepository.findByName(realmName).
-        then(realmFound => {
-            this.cache.set('realm', realmFound.realmName, realmFound);
-            return realmFound;
-        }).catch(err => {
-            throw new PersistenceError(`Could not find realm with name ${realmName} due to ${err}`);
-        });
+        return this.realmRepository.findByName(realmName);
     }
 
     /**
@@ -149,30 +112,30 @@ export class SecurityServiceImpl implements SecurityService {
     /**
      * This method adds role to principal
      * @param {*} principal
-     * @param {*} role
+     * @param {*} roles
      */
-    addRoleToPrincipal(principal: Principal, role: Role): Promise<void> {
-        return this.roleRepository.addRoleToPrincipal(principal, role).
+    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<void> {
+        return this.roleRepository.addRolesToPrincipal(principal, roles).
         then( () => {
             this.cache.set('principal', principal.principalName, principal);
             return;
         }).catch(err => {
-            throw new PersistenceError(`Could not add role ${String(role)} to principal ${String(principal)} due to ${err}`);
+            throw new PersistenceError(`Could not add role ${String(roles)} to principal ${String(principal)} due to ${err}`);
         });
     }
 
     /**
      * This method removes role from principal
      * @param {*} principal
-     * @param {*} role
+     * @param {*} roles
      */
-    removeRoleFromPrincipal(principal: Principal, role: Role): Promise<void> {
-        return this.roleRepository.removeRoleFromPrincipal(principal, role).
+    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<void> {
+        return this.roleRepository.removeRolesFromPrincipal(principal, roles).
         then(result  => {
             this.cache.set('principal', principal.principalName, principal);
             return;
         }).catch(err => {
-            throw new PersistenceError(`Could not remove role ${String(role)} to principal ${String(principal)} due to ${err}`);
+            throw new PersistenceError(`Could not remove role ${String(roles)} to principal ${String(principal)} due to ${err}`);
         });
     }
 
@@ -225,7 +188,7 @@ export class SecurityServiceImpl implements SecurityService {
         }).catch(err => {
             throw new PersistenceError(`Could not add parents ${String(parents)} to ${String(role)} due to ${err}`);
         });
-        
+
     }
 
     /**

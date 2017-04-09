@@ -14,7 +14,7 @@ import {QueryHelper}                from './query_helper';
 import type {SecurityCache}         from '../../cache/interface';
 
 /**
- * PrincipalRepositorySqlite implements PrincipalRepository by defining 
+ * PrincipalRepositorySqlite implements PrincipalRepository by defining
  * data access methods for principal objects
  */
 export class PrincipalRepositorySqlite implements PrincipalRepository {
@@ -25,9 +25,9 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
     sqlPrefix:          string;
     cache:              SecurityCache;
 
-    constructor(theDBHelper: DBHelper, 
+    constructor(theDBHelper: DBHelper,
         theRealmRepository: RealmRepository,
-        theRoleRepository: RoleRepository, 
+        theRoleRepository: RoleRepository,
         theClaimRepository: ClaimRepository,
         theCache: SecurityCache) {
         assert(theDBHelper, 'db-helper not specified');
@@ -69,25 +69,33 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 
     /**
      * This method finds principal by name
+     * @param {*} realmName
      * @param {*} principalName
      */
-    findByName(principalName: string): Promise<Principal> {
+    findByName(realmName: string, principalName: string): Promise<Principal> {
+        if (!realmName) {
+            return Promise.reject(new PersistenceError('realm not specified'));
+        }
         if (!principalName) {
             return Promise.reject(new PersistenceError('principalName not specified'));
         }
         return new Promise((resolve, reject) => {
-            this.dbHelper.db.get(`${this.sqlPrefix} WHERE principal_name == ?`, principalName, (err, row) => {
-                if (err) {
-                    reject(new PersistenceError(`Could not find principal with name ${principalName}`));
-                } else if (row) {
-                    this.__rowToPrincipal(row).
-                        then(principal => {
-                        resolve(principal);
-                    });
-                } else {
-                    reject(new PersistenceError(`Could not find principal with name ${principalName}`));
-                }
-            });
+            this.realmRepository.findByName(realmName).
+            then(realm => {
+                this.dbHelper.db.get(`${this.sqlPrefix} WHERE realm_id = ? AND principal_name == ?`,
+                  realm.id, principalName, (err, row) => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not find principal with name ${principalName}`));
+                    } else if (row) {
+                        this.__rowToPrincipal(row).
+                            then(principal => {
+                            resolve(principal);
+                        });
+                    } else {
+                        reject(new PersistenceError(`Could not find principal with name ${principalName}`));
+                    }
+                });
+            })
         });
     }
 
@@ -102,9 +110,10 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
         if (principal.id) {
             return Promise.reject(new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`));
         }
-
-        if (!principal.realm.id) {
-            return Promise.reject(new PersistenceError(`Principal realm not specifyed`));
+        if (!principal.realm) {
+            return Promise.reject(new PersistenceError(`Principal realm not specified`));
+        } else if (!principal.realm.id) {
+            return Promise.reject(new PersistenceError(`Principal realm not specified`));
         } else {
             return new Promise((resolve, reject) => {
                 this.dbHelper.db.serialize(() => {
@@ -136,9 +145,9 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 				} else {
 					resolve(true);
 				}
-			});        
+			});
 			this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ?', id, (err) => {});
-			this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?', id, (err) => {});        
+			this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?', id, (err) => {});
 		});
     }
 

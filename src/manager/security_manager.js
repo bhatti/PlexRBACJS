@@ -6,7 +6,7 @@ import {AuthorizationError}         from '../domain/auth_error';
 import type {SecurityService}       from '../service/interface';
 
 /**
- * SecurityManagerImpl implements SecurityManager and checks if 
+ * SecurityManagerImpl implements SecurityManager and checks if
  * principal or role has proper access to claims
  */
 class SecurityManagerImpl implements SecurityManager {
@@ -20,12 +20,12 @@ class SecurityManagerImpl implements SecurityManager {
 
     /**
      * This method returns true if condition is true given context
-     * 
+     *
      * @param {*} request - encapsulates request to check
      * @return - true if access is granted, false otherwise.
      */
     check(request: SecurityAccessRequest): Promise<boolean> {
-        return this.securityService.getPrincipal(request.principalName).
+        return this.securityService.getPrincipal(request.realmName, request.principalName).
         then(principal => {
             let allClaims = principal.allClaims();
             allClaims.forEach(claim => {
@@ -36,12 +36,12 @@ class SecurityManagerImpl implements SecurityManager {
                             return true;
                         } else {
                             console.log(`Failed to authorize ${String(claim)} to ${request.principalName}`);
-                        }                                                                                                              
+                        }
                     } else {
                         console.log(`Granted ${String(claim)} to ${request.principalName}`);
                         return true;
-                    }   
-                }   
+                    }
+                }
             });
             return false;
         }).catch(err => {
