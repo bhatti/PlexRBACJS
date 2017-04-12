@@ -17,8 +17,8 @@ export class RoleImpl implements Role {
     claims:     Set<Claim>;     // set of claims
 
     parents:    Set<Role>;      // optional parent role
-    
-    constructor(theId: number, 
+
+    constructor(theId: number,
                 theRealm: Realm,
                 theRoleName: string) {
         //
@@ -36,6 +36,6 @@ export class RoleImpl implements Role {
      * returns textual representation
      */
     toString() {
-        return `(${String(this.realm)}, ${this.roleName})`;
-    }            
+        return `(${String(this.realm)}, ${this.roleName}), claims ${String(this.claims)}`;
+    }
 }

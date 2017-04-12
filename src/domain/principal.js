@@ -30,8 +30,8 @@ export class PrincipalImpl implements Principal {
      */
     roles:          Set<Role>;
 
-    constructor(theId: number, 
-                theRealm: Realm, 
+    constructor(theId: number,
+                theRealm: Realm,
                 thePrincipalName: string) {
         //
         assert(theRealm, 'realm is required');
@@ -68,5 +68,5 @@ export class PrincipalImpl implements Principal {
      */
     toString() {
         return `(${String(this.realm)}, ${this.principalName}, ${String(this.claims)}, ${String(this.roles)})`;
-    }    
+    }
 }

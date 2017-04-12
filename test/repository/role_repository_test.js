@@ -229,7 +229,63 @@ describe('RoleRepository', function() {
     });
   });
 
-  
+  describe('#removeRolesFromPrincipal', function() {
+    it('should be able to remove roles from principal', function(done) {
+        let rolesNames = ['tech-support', 'senior-tech-support', 'receptionist'];
+        //
+        this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`)).
+        then(realm => {
+            return this.principalRepository.save(new PrincipalImpl(null, realm, 'johnd'));
+        }).then(principal => {
+            Promise.all(rolesNames.map(name => {
+                return this.roleRepository.save(new RoleImpl(null, principal, name))
+            })).then(saved => {
+              let roles = new Set([saved[0], saved[1], saved[2]]);
+              return this.roleRepository.addRolesToPrincipal(principal, roles);
+            }).then(updated => {
+                return this.principalRepository.findById(principal.id);
+            }).then(principal => {
+                return this.roleRepository.removeRolesFromPrincipal(principal, principal.roles);
+            }).then(updated => {
+                return this.principalRepository.findById(principal.id);
+            }).then(principal => {
+              assert.equal(0, principal.roles.size);
+              done();
+            }).catch(err => {
+              done(err);
+            });
+        }).catch(err => {
+            done(err);
+        });
+    });
+  });
+
+  describe('#loadPrincipalRoles', function() {
+    it('should be able to load roles for principal', function(done) {
+        let rolesNames = ['tech-support', 'senior-tech-support', 'receptionist', 'manager'];
+        //
+        this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`)).
+        then(realm => {
+            return this.principalRepository.save(new PrincipalImpl(null, realm, 'johnd'));
+        }).then(principal => {
+            Promise.all(rolesNames.map(name => {
+                return this.roleRepository.save(new RoleImpl(null, principal, name))
+            })).then(saved => {
+              let roles = new Set([saved[0], saved[1], saved[2], saved[3]]);
+              return this.roleRepository.addRolesToPrincipal(principal, roles);
+            }).then(updated => {
+                return this.roleRepository.loadPrincipalRoles(principal);
+            }).then(updated => {
+              assert.equal(4, principal.roles.size);
+              done();
+            }).catch(err => {
+              done(err);
+            });
+        }).catch(err => {
+            done(err);
+        });
+    });
+  });
 
   describe('#search', function() {
     it('should be able to search domain by name', function(done) {

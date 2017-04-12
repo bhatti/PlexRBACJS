@@ -8,10 +8,14 @@ import type {Realm}                 from '../../src/domain/interface';
 import type {Claim}                 from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
 import {ClaimRepositorySqlite}      from '../../src/repository/sqlite/claim_repository';
+import {PrincipalRepositorySqlite}  from '../../src/repository/sqlite/principal_repository';
+import {RoleRepositorySqlite}       from '../../src/repository/sqlite/role_repository';
 import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
 import {QueryOptions}               from '../../src/repository/interface';
 import {ClaimImpl}                  from '../../src/domain/claim';
 import {RealmImpl}                  from '../../src/domain/realm';
+import {RoleImpl}                   from '../../src/domain/role';
+import {PrincipalImpl}              from '../../src/domain/principal';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
@@ -20,16 +24,20 @@ describe('ClaimRepository', function() {
   let dbHelper:         DBHelper;
   let claimRepository:  ClaimRepositorySqlite;
   let realmRepository:  RealmRepositorySqlite;
- 
+  let principalRepository:  PrincipalRepositorySqlite;
+  let roleRepository:       RoleRepositorySqlite;
+
   before(function(done) {
     this.dbHelper = new DBHelper(':memory:');
     //this.dbHelper = new DBHelper('/tmp/test.db');
     this.dbHelper.db.on('trace', function(trace){
-        //console.log(`trace ${trace}`);
+        console.log(`trace ${trace}`);
     })
     //
     this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
     this.claimRepository     = new ClaimRepositorySqlite(this.dbHelper, this.realmRepository);
+    this.roleRepository      = new RoleRepositorySqlite(this.dbHelper, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
+    this.principalRepository = new PrincipalRepositorySqlite(this.dbHelper, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
     //
     this.dbHelper.createTables(() => {
       done();
@@ -87,6 +95,36 @@ describe('ClaimRepository', function() {
     });
   });
 
+  describe('#addClaimToPrincipal', function() {
+    it('should be able to add claims to principal', function(done) {
+        this.realmRepository.save(new RealmImpl(null, 'domain-x')).
+            then(realm => {
+            return this.principalRepository.save(new PrincipalImpl(null, realm, 'xuser'));
+        }).then(principal => {
+            let claims = [
+                new ClaimImpl(null, principal.realm, 'action1', 'resource1', 'condition1'),
+                new ClaimImpl(null, principal.realm, 'action2', 'resource2', 'condition2'),
+                new ClaimImpl(null, principal.realm, 'action3', 'resource3', 'condition3'),
+            ]
+            return this.claimRepository.addClaimsToPrincipal(principal, claims);
+        }).then(principal => {
+            let claims = [
+                new ClaimImpl(null, principal.realm, 'action4', 'resource4', 'condition4')
+            ]
+            this.claimRepository.addClaimsToPrincipal(principal, claims).
+            then(result => {
+                return this.principalRepository.findByName(principal.realm.realmName, principal.principalName);
+            }).then(loaded => {
+                //assert.equal(4, loaded.claims.size);
+                done();
+            }).catch(err => {
+                done(err);
+            });
+        }).catch(err => {
+            done(err);
+        });
+    });
+  });
 
   describe('#search', function() {
     it('should be able to search domain by name', function(done) {
@@ -101,7 +139,7 @@ describe('ClaimRepository', function() {
             done();
         });
     });
-  }); 
+  });
 
   describe('#removeById', function() {
     it('should fail because of unknown id', function(done) {

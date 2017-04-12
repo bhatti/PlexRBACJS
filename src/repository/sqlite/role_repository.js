@@ -315,22 +315,35 @@ export class RoleRepositorySqlite implements RoleRepository {
     /**
      * This method loads roles for given principal
      */
-    loadPrincipalRoles(principal: Principal): Promise<void> {
+    loadPrincipalRoles(principal: Principal): Promise<Principal> {
         if (!principal) {
             return Promise.reject(new PersistenceError('principal not specified'));
         }
+        principal.roles.clear();
         let criteria: Map<string, any> = new Map();
         criteria.set('principal_id', principal.id);
-        let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
-        return q.query(
-                'SELECT principal_id, role_id, roles.rowid AS id, role_name, realm_id ' +
-                'FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id',
-                criteria, (row) => {
-                return this.__rowToRole(row).
-                    then(role => {
-                    principal.roles.add(role);
-				    return role;
+        return new Promise((resolve, reject) => {
+            let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
+            q.query(
+                    'SELECT principal_id, role_id, roles.rowid AS id, role_name, realm_id ' +
+                    'FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id',
+                    criteria, (row) => {
+                    return this.__rowToRole(row).
+                        then(role => {
+                        principal.roles.add(role);
+    				    return role;
+                    });
+            }).then(result => {
+                let promises = [];
+                principal.roles.forEach(role => {
+                    promises.push(this.claimRepository.loadRoleClaims(role));
                 });
+                Promise.all(promises).then(result => {
+                    resolve(principal);
+                })
+            }).catch(err => {
+                reject(err);
+            })
         });
     }
 

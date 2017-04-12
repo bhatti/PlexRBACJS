@@ -62,14 +62,14 @@ export interface SecurityService {
      * @param {*} principal
      * @param {*} roles
      */
-    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<void>;
+    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
 
     /**
      * This method removes role from principal
      * @param {*} principal
      * @param {*} roles
      */
-    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<void>;
+    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
 
     /**
      * This method adds claim
@@ -85,11 +85,6 @@ export interface SecurityService {
     removeClaim(claim: Claim): Promise<boolean>;
 
     /**
-     * This method adds claims to principal
-     */
-    addClaimToPrincipal(principal: Principal, claim: Claim): Promise<void>;
-
-    /**
      * This method adds set of roles as parent
      */
     addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>;
@@ -100,26 +95,31 @@ export interface SecurityService {
     removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>;
 
     /**
+     * This method adds claims to principal
+     */
+    addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
+
+    /**
      * This method adds claims to role
      */
-    addClaimToRole(role: Role, claim: Claim): Promise<void>;
+    addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role>;
 
     /**
      * This method removes claims from principal
      */
-    removeClaimFromPrincipal(principal: Principal, claim: Claim): Promise<void>;
+    removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
 
     /**
      * This method remove claims from role
      */
-    removeClaimFromRole(role: Role, claim: Claim): Promise<void>;
+    removeClaimsFromRole(role: Role, claims: Set<Claim>): Promise<Role>;
 
     /**
      * This method loads claims for given principal
      */
-    loadPrincipalClaims(principal: Principal): Promise<void>;
+    loadPrincipalClaims(principal: Principal): Promise<Principal>;
     /**
      * This method loads claims for given role
      */
-    loadRoleClaims(role: Role): Promise<void>;
+    loadRoleClaims(role: Role): Promise<Role>;
 }

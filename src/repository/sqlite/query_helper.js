@@ -14,18 +14,20 @@ export class QueryHelper<T> {
     }
 
     query(
-        prefixQuery: string, 
-        criteria: Map<string, any>, 
-        mapper: (row: any) => Promise<T>, 
+        prefixQuery: string,
+        criteria: Map<string, any>,
+        mapper: (row: any) => Promise<T>,
         options: ?QueryOptions = null): Promise<Array<T>> {
         //
-        var query = criteria.size > 0 ? prefixQuery + ' WHERE ' : prefixQuery;
+        var query = criteria.size > 0 ? prefixQuery + ' WHERE 1=1' : prefixQuery;
         var params = [];
         criteria.forEach((v, k) => {
-            query += `${k} = ? `;
+            query += ` AND ${k} = ?`;
             params.push(v);
         });
         //
+        //console.log(`----querying ${JSON.stringify(params)} using ${query}`);
+
         return new Promise((resolve, reject) => {
             this.db.all(query, params, (err, rows) => {
                 if (err) {
@@ -33,7 +35,7 @@ export class QueryHelper<T> {
                 } else if (rows) {
                     var resultPromises = [];
                     rows.forEach(row => {
-                        //console.log(`----------!!!!query got ${JSON.stringify(row)} -- from ${query}`);
+                        //console.log(`------query got ${JSON.stringify(row)} -- from ${query}`);
                         let promise = mapper(row);
                         resultPromises.push(promise);
                     });
@@ -44,7 +46,7 @@ export class QueryHelper<T> {
                 } else {
                     resolve([]);
                 }
-            }); 
+            });
         });
     }
 }

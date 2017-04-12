@@ -169,6 +169,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                                 this.roleRepository.loadPrincipalRoles(principal)];
                 return Promise.all(promises).
                     then(result => {
+                        console.log(`>>>>>>> principal loaded ${JSON.stringify(principal)}`)
                     return principal;
                 });
         });

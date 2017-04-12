@@ -132,7 +132,7 @@ export interface RoleRepository extends Repository<Role> {
     /**
      * This method loads roles for principal
      */
-    loadPrincipalRoles(principal: Principal): Promise<void>;
+    loadPrincipalRoles(principal: Principal): Promise<Principal>;
 
    /**
      * This method adds set of roles as parent
@@ -175,32 +175,32 @@ export interface ClaimRepository extends Repository<Claim> {
     /**
      * This method adds claims to principal
      */
-    addClaimToPrincipal(principal: Principal, claim: Claim): Promise<void>;
+    addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
 
     /**
      * This method adds claims to role
      */
-    addClaimToRole(role: Role, claim: Claim): Promise<void>;
+    addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role>;
 
    /**
      * This method removes claims from principal
      */
-    removeClaimFromPrincipal(principal: Principal, claim: Claim): Promise<void>;
+    removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
 
     /**
      * This method remove claims from role
      */
-    removeClaimFromRole(role: Role, claim: Claim): Promise<void>;
+    removeClaimsFromRole(role: Role, claims: Set<Claim>): Promise<Role>;
 
     /**
      * This method loads claims for given principal using claims associated with role and principal
      */
-    loadPrincipalClaims(principal: Principal): Promise<void>;
+    loadPrincipalClaims(principal: Principal): Promise<Principal>;
 
     /**
      * This method load claims for role
      */
-    loadRoleClaims(role: Role): Promise<void>;
+    loadRoleClaims(role: Role): Promise<Role>;
 }
 
 /**
