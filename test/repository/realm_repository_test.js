@@ -18,7 +18,7 @@ describe('RealmRepository', function() {
 
   before(function(done) {
     this.dbHelper = new DBHelper(':memory:');
-    this.dbHelper = new DBHelper('/tmp/test.db');
+    //this.dbHelper = new DBHelper('/tmp/test.db');
     this.dbHelper.db.on('trace', function(trace){
         //console.log(`trace ${trace}`);
     })

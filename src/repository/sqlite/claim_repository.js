@@ -124,7 +124,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                 });
             }
         });
-        return await savePromise;
+        return savePromise;
     }
 
     /**

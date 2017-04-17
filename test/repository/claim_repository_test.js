@@ -19,20 +19,6 @@ import {PrincipalImpl}              from '../../src/domain/principal';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
-function resolveAfter2Seconds(x) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve(x);
-    }, 2000);
-  });
-}
-
-async function add1(x) {
-  var a = resolveAfter2Seconds(20);
-  var b = resolveAfter2Seconds(30);
-  return x + await a + await b;
-}
-
 describe('ClaimRepository', function() {
   let dbHelper:         DBHelper;
   let claimRepository:  ClaimRepositorySqlite;

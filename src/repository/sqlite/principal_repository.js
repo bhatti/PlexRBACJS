@@ -106,7 +106,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
         if (principal.id) {
             throw new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`);
         } else {
-            let savePromise = new Promise((resolve, reject) => {
+            return new Promise((resolve, reject) => {
                 this.dbHelper.db.serialize(() => {
                     let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
                     stmt.run(principal.realm.id, principal.principalName);
@@ -118,7 +118,6 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                     });
                 });
             });
-            return await savePromise;
         }
     }
 
