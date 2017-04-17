@@ -1,6 +1,7 @@
 {
-  "presets": ["es2015"],
+  "presets": ["es2015", "stage-0", "stage-3"],
   "plugins": [
     "syntax-flow",
-    "transform-flow-strip-types"
+    "transform-flow-strip-types",
+    "transform-async-to-generator"
 ]}

@@ -18,7 +18,7 @@ describe('RealmRepository', function() {
 
   before(function(done) {
     this.dbHelper = new DBHelper(':memory:');
-    //this.dbHelper = new DBHelper('/tmp/test.db');
+    this.dbHelper = new DBHelper('/tmp/test.db');
     this.dbHelper.db.on('trace', function(trace){
         //console.log(`trace ${trace}`);
     })
@@ -39,76 +39,63 @@ describe('RealmRepository', function() {
   });
 
   describe('#saveGetById', function() {
-    it('should not be able to get realm by id without saving', function(done) {
-        this.realmRepository.findById(1000).
-            then(realm => {
-            done(new Error('should fail'));
-        }).catch(err => {
-            done();
-        });
+    it('should not be able to get realm by id without saving', async function() {
+        try {
+            let realm = await this.realmRepository.findById(1000);
+            await realm;
+            assert(false, 'should not return realm');
+        } catch(err) {
+        }
     });
   });
 
   describe('#saveGetById', function() {
-    it('should be able to get realm by id after saving', function(done) {
-        this.realmRepository.save(new RealmImpl(null, 'mydomain')).
-            then(saved => {
-            return this.realmRepository.findById(saved.id);
-        }).then(realm => {
-            assert.equal('mydomain', realm.realmName);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+    it('should be able to get realm by id after saving', async function() {
+        let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+        let loaded = await this.realmRepository.findById(realm.id);
+        assert.equal(realm.realmName, loaded.realmName);
     });
   });
 
   describe('#saveGetByName', function() {
-    it('should be able to get realm by name after saving', function(done) {
-        this.realmRepository.save(new RealmImpl(null, 'anotherdomain')).
-            then(saved => {
-            return this.realmRepository.findByName('anotherdomain');
-        }).then(realm => {
-            assert.equal('anotherdomain', realm.realmName);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+    it('should be able to get realm by name after saving', async function() {
+        let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+        let loaded = await this.realmRepository.findByName(realm.realmName);
+        assert.equal(realm.realmName, loaded.realmName);
     });
   });
 
   describe('#saveGetByName', function() {
-    it('should not be able to get realm by unknown name', function(done) {
-        this.realmRepository.findByName('unknown-domain').
-            then(realm => {
-            done(new Error('should fail'));
-        }).catch(err => {
-            done();
-        });
+    it('should not be able to get realm by unknown name', async function() {
+        try {
+            let realm = await this.realmRepository.findByName('unknown-domain');
+            await realm;
+            assert(false, 'should not return realm');
+        } catch(err) {
+        }
     });
   });
+
 
   describe('#search', function() {
-    it('should be able to search domain by name', function(done) {
+    it('should be able to search domain by name', async function() {
+        let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+
         let criteria    = new Map();
-        criteria.set('realm_name', 'mydomain');
-        this.realmRepository.search(criteria).
-            then(results => {
-            assert.equal(1, results.length);
-            assert.equal('mydomain', results[0].realmName);
-            done();
-        });
+        criteria.set('realm_name', realm.realmName);
+        let results = await this.realmRepository.search(criteria);
+        assert.equal(1, results.length);
+        assert.equal(realm.realmName, results[0].realmName);
     });
-  }); 
+  });
 
   describe('#removeById', function() {
-    it('should fail', function(done) {
-        this.realmRepository.removeById(1).
-        then(result => {
-            done(new Error(`should fail ${result}`));
-        }).catch(err => {
-            done();
-        });
+    it('should fail', async function() {
+        try {
+            let removed = await this.realmRepository.removeById(1);
+            assert(false, 'should fail');
+        } catch(err) {
+        }
     });
   });
 });

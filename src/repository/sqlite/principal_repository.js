@@ -47,11 +47,10 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * This method finds principal by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Principal> {
-        if (!id) {
-            return Promise.reject(new PersistenceError('principal-id not specified'));
-        }
-        return new Promise((resolve, reject) => {
+    async findById(id: number): Promise<Principal> {
+        assert(id, 'principal-id not specified');
+
+        let findPromise = new Promise((resolve, reject) => {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find principal with id ${id}`));
@@ -65,6 +64,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                 }
             });
         });
+        return findPromise;
     }
 
     /**
@@ -72,30 +72,26 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * @param {*} realmName
      * @param {*} principalName
      */
-    findByName(realmName: string, principalName: string): Promise<Principal> {
-        if (!realmName) {
-            return Promise.reject(new PersistenceError('realm not specified'));
-        }
-        if (!principalName) {
-            return Promise.reject(new PersistenceError('principalName not specified'));
-        }
+    async findByName(realmName: string, principalName: string): Promise<Principal> {
+        assert(realmName, 'realm-name not specified');
+        assert(principalName, 'principal-name not specified');
+
         return new Promise((resolve, reject) => {
-            this.realmRepository.findByName(realmName).
-            then(realm => {
-                this.dbHelper.db.get(`${this.sqlPrefix} WHERE realm_id = ? AND principal_name == ?`,
+            this.realmRepository.findByName(realmName).then(realm => {
+                this.dbHelper.db.get(
+                    `${this.sqlPrefix} WHERE realm_id = ? AND principal_name == ?`,
                   realm.id, principalName, (err, row) => {
                     if (err) {
                         reject(new PersistenceError(`Could not find principal with name ${principalName}`));
                     } else if (row) {
-                        this.__rowToPrincipal(row).
-                            then(principal => {
+                        this.__rowToPrincipal(row).then(principal => {
                             resolve(principal);
                         });
-                    } else {
-                        reject(new PersistenceError(`Could not find principal with name ${principalName}`));
                     }
-                });
-            })
+                  });
+            }).catch(err => {
+                reject(err);
+            });
         });
     }
 
@@ -103,19 +99,14 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * This method saves object and returns updated object
      * @param {*} principal - to save
      */
-    save(principal: Principal): Promise<Principal> {
-        if (!principal) {
-            return Promise.reject(new PersistenceError('principal not specified'));
-        }
+    async save(principal: Principal): Promise<Principal> {
+        assert(principal, 'principal not specified');
+        assert(principal.realm && principal.realm.id, 'realm-id not specified');
+
         if (principal.id) {
-            return Promise.reject(new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`));
-        }
-        if (!principal.realm) {
-            return Promise.reject(new PersistenceError(`Principal realm not specified`));
-        } else if (!principal.realm.id) {
-            return Promise.reject(new PersistenceError(`Principal realm not specified`));
+            throw new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`);
         } else {
-            return new Promise((resolve, reject) => {
+            let savePromise = new Promise((resolve, reject) => {
                 this.dbHelper.db.serialize(() => {
                     let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
                     stmt.run(principal.realm.id, principal.principalName);
@@ -127,6 +118,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                     });
                 });
             });
+            return await savePromise;
         }
     }
 
@@ -134,45 +126,38 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean> {
-        if (!id) {
-            return Promise.reject(new PersistenceError('id not specified'));
-        }
-        return new Promise((resolve, reject) => {
-			this.dbHelper.db.run('DELETE FROM principals WHERE rowid = ?', id, (err) => {
-				if (err) {
-					reject(new PersistenceError(`Failed to remove principal ${id}`));
-				} else {
-					resolve(true);
-				}
-			});
-			this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ?', id, (err) => {});
-			this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?', id, (err) => {});
-		});
+    async removeById(id: number): Promise<boolean> {
+        assert(id, 'principal-id not specified');
+
+        let removePromise = new Promise((resolve, reject) => {
+			                this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ?', id, (err) => {});
+			                this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?', id, (err) => {});
+			                this.dbHelper.db.run('DELETE FROM principals WHERE rowid = ?', id, (err) => {
+				                  if (err) {
+					                    reject(new PersistenceError(`Failed to remove principal ${id}`));
+				                  } else {
+					                    resolve(true);
+				                  }
+			                });
+	              });
+        return await removePromise;
     }
 
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Principal>> {
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Principal>> {
         let q:QueryHelper<Principal> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
              return this.__rowToPrincipal(row);
          }, options);
     }
 
-    __rowToPrincipal(row: any): Promise<Principal> {
-        return this.realmRepository.findById(row.realm_id).
-            then(realm => {
-                let principal = new PrincipalImpl(row.id, realm, row.principal_name);
-                let promises = [this.claimRepository.loadPrincipalClaims(principal),
-                                this.roleRepository.loadPrincipalRoles(principal)];
-                return Promise.all(promises).
-                    then(result => {
-                        console.log(`>>>>>>> principal loaded ${JSON.stringify(principal)}`)
-                    return principal;
-                });
-        });
+    async __rowToPrincipal(row: any): Promise<Principal> {
+        let realm       = await this.realmRepository.findById(row.realm_id);
+        let principal   = new PrincipalImpl(row.id, realm, row.principal_name);
+        await this.claimRepository.loadPrincipalClaims(principal);
+        await this.roleRepository.loadPrincipalRoles(principal);
+        return principal;
     }
-
 }

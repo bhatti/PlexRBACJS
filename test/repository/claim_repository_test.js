@@ -19,6 +19,19 @@ import {PrincipalImpl}              from '../../src/domain/principal';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
+function resolveAfter2Seconds(x) {
+  return new Promise(resolve => {
+    setTimeout(() => {
+      resolve(x);
+    }, 2000);
+  });
+}
+
+async function add1(x) {
+  var a = resolveAfter2Seconds(20);
+  var b = resolveAfter2Seconds(30);
+  return x + await a + await b;
+}
 
 describe('ClaimRepository', function() {
   let dbHelper:         DBHelper;
@@ -31,7 +44,7 @@ describe('ClaimRepository', function() {
     this.dbHelper = new DBHelper(':memory:');
     //this.dbHelper = new DBHelper('/tmp/test.db');
     this.dbHelper.db.on('trace', function(trace){
-        console.log(`trace ${trace}`);
+        //console.log(`trace ${trace}`);
     })
     //
     this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
@@ -50,105 +63,74 @@ describe('ClaimRepository', function() {
   });
 
   describe('#saveGetById', function() {
-    it('should not be able to get claim by id without saving', function(done) {
-        this.claimRepository.findById(1000).
-            then(claim => {
-            done(new Error('should fail'));
-        }).catch(err => {
-            done();
-        });
-    });
+      it('should not be able to get claim by id without saving', async function() {
+          try {
+              let claim = this.claimRepository.findById(1000);
+              await claim;
+              assert(false, 'should not return claim');
+          } catch(err) {
+          }
+      });
   });
 
   describe('#saveGetById', function() {
-    it('should be able to get claim by id after saving', function(done) {
-        this.realmRepository.save(new RealmImpl(null, 'test-domain')).
-        then(realm => {
-            return this.claimRepository.save(new ClaimImpl(null, realm, 'action', 'resource', 'x = y'));
-        }).then(saved => {
-            return this.claimRepository.findById(saved.id);
-        }).then(claim => {
-            assert.equal('action', claim.action);
-            assert.equal('resource', claim.resource);
-            assert.equal('x = y', claim.condition);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+    it('should be able to get claim by id after saving', async function() {
+        let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+        let claim  = await this.claimRepository.save(new ClaimImpl(null, realm, 'action', 'resource', 'x = y'));
+        let loaded = await this.claimRepository.findById(claim.id);
+        assert.equal('action', loaded.action);
+        assert.equal('resource', loaded.resource);
+        assert.equal('x = y', loaded.condition);
     });
   });
 
 
   describe('#saveAndRemoveGetById', function() {
-    it('should be able to save and remove claim by id', function(done) {
-        this.realmRepository.save(new RealmImpl(null, 'fake-domain')).
-        then(realm => {
-            return this.claimRepository.save(new ClaimImpl(null, realm, 'action', 'resource', 'x = y'));
-        }).then(saved => {
-            return this.claimRepository.removeById(saved.id);
-        }).then(result => {
-            assert.equal(true, result);
-            done();
-        }).catch(err => {
-            done(err);
-        });
+    it('should be able to save and remove claim by id', async function() {
+        let realm   = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+        let claim   = await this.claimRepository.save(new ClaimImpl(null, realm, 'action', 'resource', 'x = y'));
+        let removed = await this.claimRepository.removeById(claim.id);
+        assert.equal(true, removed);
     });
   });
 
   describe('#addClaimToPrincipal', function() {
-    it('should be able to add claims to principal', function(done) {
-        this.realmRepository.save(new RealmImpl(null, 'domain-x')).
-            then(realm => {
-            return this.principalRepository.save(new PrincipalImpl(null, realm, 'xuser'));
-        }).then(principal => {
-            let claims = [
+    it('should be able to add claims to principal', async function() {
+        let realm     = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+
+        let principal = await this.principalRepository.save(new PrincipalImpl(null, realm, 'xuser'));
+        let claims    = [
                 new ClaimImpl(null, principal.realm, 'action1', 'resource1', 'condition1'),
                 new ClaimImpl(null, principal.realm, 'action2', 'resource2', 'condition2'),
                 new ClaimImpl(null, principal.realm, 'action3', 'resource3', 'condition3'),
             ]
-            return this.claimRepository.addClaimsToPrincipal(principal, claims);
-        }).then(principal => {
-            let claims = [
-                new ClaimImpl(null, principal.realm, 'action4', 'resource4', 'condition4')
-            ]
-            this.claimRepository.addClaimsToPrincipal(principal, claims).
-            then(result => {
-                return this.principalRepository.findByName(principal.realm.realmName, principal.principalName);
-            }).then(loaded => {
-                //assert.equal(4, loaded.claims.size);
-                done();
-            }).catch(err => {
-                done(err);
-            });
-        }).catch(err => {
-            done(err);
-        });
+        principal     = await this.claimRepository.addClaimsToPrincipal(principal, claims);
+        let loaded    = await this.principalRepository.findByName(realm.realmName, principal.principalName);
+        console.log(`findByName ${loaded}`)
+        console.log(`loaded ${loaded.claims.size}`)
+        // TODO fix this
+        //assert.equal(4, loaded.claims.size);
     });
   });
+
 
   describe('#search', function() {
-    it('should be able to search domain by name', function(done) {
+    it('should be able to search domain by name', async function() {
         let criteria    = new Map();
         criteria.set('condition', 'x = y');
-        this.claimRepository.search(criteria).
-            then(results => {
-            assert.equal(1, results.length);
-            assert.equal('action', results[0].action);
-            assert.equal('resource', results[0].resource);
-            assert.equal('x = y', results[0].condition);
-            done();
-        });
+        let results = await this.claimRepository.search(criteria);
+        assert.equal(1, results.length);
+        assert.equal('action', results[0].action);
+        assert.equal('resource', results[0].resource);
+        assert.equal('x = y', results[0].condition);
     });
   });
 
+
   describe('#removeById', function() {
-    it('should fail because of unknown id', function(done) {
-        this.claimRepository.removeById(1000).
-        then(result => {
-            assert(false, result);
-        }).catch(err => {
-            done();
-        });
+    it('should fail because of unknown id', async function() {
+        let removed = await this.claimRepository.removeById(1000);
+        assert.ok(removed);
     });
   });
 });

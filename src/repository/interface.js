@@ -120,14 +120,14 @@ export interface RoleRepository extends Repository<Role> {
      * @param {*} principal
      * @param {*} roles
      */
-    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<*>;
+    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
 
     /**
      * This method removes role from principal
      * @param {*} principal
      * @param {*} role
      */
-    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<*>;
+    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
 
     /**
      * This method loads roles for principal

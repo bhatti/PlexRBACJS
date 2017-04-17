@@ -12,7 +12,7 @@ import {QueryHelper}            from './query_helper';
 import type {SecurityCache}     from '../../cache/interface';
 
 /**
- * RealmRepositorySqlite implements RealmRepository by defining data access 
+ * RealmRepositorySqlite implements RealmRepository by defining data access
  * methods for realm objects
  */
 export class RealmRepositorySqlite implements RealmRepository {
@@ -32,10 +32,9 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Realm> {
-        if (!id) {
-            return Promise.reject(new PersistenceError('realm-id not specified'));
-        }
+    async findById(id: number): Promise<Realm> {
+        assert(id, 'realm-id not specified');
+
         let cached = this.cache.get('realm', `id_${id}`);
         if (cached) {
             return Promise.resolve(cached);
@@ -63,18 +62,16 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method finds realm by name
      * @param {*} realmName
      */
-    findByName(realmName: string): Promise<Realm> {
-        if (!realmName) {
-            return Promise.reject(new PersistenceError('realmName not specified'));
-        }
+    async findByName(realmName: string): Promise<Realm> {
+        assert(realmName, 'realm-name not specified');
+
         let cached = this.cache.get('realm', realmName);
         if (cached) {
-            return Promise.resolve(cached);
+            return cached;
         }
 
-        let db = this.dbHelper.db;
         return new Promise((resolve, reject) => {
-            db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
+            this.dbHelper.db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find realm with name ${realmName}`));
                 } else if (row) {
@@ -94,21 +91,19 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method saves object and returns updated object
      * @param {*} realm - to save
      */
-    save(realm: Realm): Promise<Realm> {
-        if (!realm) {
-            return Promise.reject(new PersistenceError('realm not specified'));
-        }
+    async save(realm: Realm): Promise<Realm> {
+        assert(realm, 'realm not specified');
+
         if (realm.id) {
             throw new PersistenceError(`Realm is immutable and cannot be updated ${String(realm)}`);
         } else {
-            let db = this.dbHelper.db;
             //
             return new Promise((resolve, reject) => {
                 this.dbHelper.db.serialize(() => {
-                    let stmt = db.prepare('INSERT INTO realms VALUES (?)');
+                    let stmt = this.dbHelper.db.prepare('INSERT INTO realms VALUES (?)');
                     stmt.run(realm.realmName);
                     stmt.finalize(() => {
-                        db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
+                        this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
                             realm.id = row.lastID;
                             if (err) {
                                 reject(new PersistenceError(`Could not add ${String(realm)} due to ${err}`));
@@ -128,22 +123,22 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean> {
-        return Promise.reject(new PersistenceError(`Realm is immutable and cannot be deleted ${id}`));
+    async removeById(id: number): Promise<boolean> {
+        throw new PersistenceError(`Realm is immutable and cannot be deleted ${id}`);
     }
 
     /**
      * This method queries database and returns list of objects
-     */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>> {
+     a*/
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>> {
         let q:QueryHelper<Realm> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, row => {
              return this.__rowToRealm(row);
          }, options);
     }
 
-    __rowToRealm(row: any): Promise<Realm> {
-        return Promise.resolve(new RealmImpl(row.id, row.realm_name));
+    async __rowToRealm(row: any): Promise<Realm> {
+        return new RealmImpl(row.id, row.realm_name);
     }
 
 }

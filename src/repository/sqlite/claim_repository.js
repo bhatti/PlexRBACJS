@@ -35,12 +35,9 @@ export class ClaimRepositorySqlite implements ClaimRepository {
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Claim> {
-        if (!id) {
-            return Promise.reject(new PersistenceError('claim-id not specified'));
-        }
-        //
-        return new Promise((resolve, reject) => {
+    async findById(id: number): Promise<Claim> {
+        assert(id, 'claim-id not specified');
+        let findPromise = new Promise((resolve, reject) => {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find claim with id ${id} due to ${err}`));
@@ -56,44 +53,12 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                 }
             });
         });
+        return await findPromise;
     }
 
-    findByValue(claim: Claim): Promise<Claim> {
-        if (!claim) {
-            return Promise.reject(new PersistenceError('claim not specified'));
-        }
-        if (!claim.realm || !claim.realm.id) {
-            return Promise.reject(new PersistenceError('realm-id not specified'));
-        }
-        let criteria = new Map();
-        criteria.set('realm_id', claim.realm.id);
-        criteria.set('action', claim.action);
-        criteria.set('resource', claim.resource);
-        criteria.set('condition', claim.condition);
-
-        //
-        return new Promise((resolve, reject) => {
-            this.search(criteria).
-            then(results => {
-                if (results.length > 0) {
-                    resolve(results[0]);
-                } else {
-                    reject(new PersistenceError(`Could not locate any claim with value ${String(claim)}`));
-                }
-            }).catch(err => {
-                reject(err);
-            });
-        });
-    }
-
-    _findByValue(claim: Claim): Promise<Claim> {
-        if (!claim) {
-            return Promise.reject(new PersistenceError('claim not specified'));
-        }
-        if (!claim.realm || !claim.realm.id) {
-            return Promise.reject(new PersistenceError('realm-id not specified'));
-        }
-        //
+    async findByValue(claim: Claim): Promise<Claim> {
+        assert(claim, 'claim-id not specified');
+        assert(claim.realm && claim.realm.id, 'realm-id not specified');
         return new Promise((resolve, reject) => {
             this.dbHelper.db.get(`SELECT rowid AS id FROM claims WHERE realm_id = ? AND action == ? AND resource = ? AND condition = ?`,
                 [claim.realm.id, claim.action, claim.resource, claim.condition], (err, row) => {
@@ -103,7 +68,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                     claim.id = row.id;
                     resolve(claim);
                 } else {
-                    reject(new PersistenceError(`Could not locate claim with value ${String(claim)} -- ${err} -- ${row}`));
+                    reject(new PersistenceError(`Could not locate claim with value ${String(claim)}`));
                 }
             });
         });
@@ -113,88 +78,82 @@ export class ClaimRepositorySqlite implements ClaimRepository {
      * This method saves object and returns updated object
      * @param {*} Claim - to save
      */
-    save(claim: Claim): Promise<Claim> {
-        if (!claim) {
-            return Promise.reject(new PersistenceError('claim not specified'));
-        }
-        if (!claim.realm || !claim.realm.id) {
-            return Promise.reject(new PersistenceError('realm-id not specified'));
-        }
+    async save(claim: Claim): Promise<Claim> {
+        assert(claim, 'claim-id not specified');
+        assert(claim.realm && claim.realm.id, 'realm-id not specified');
         //
-        let db = this.dbHelper.db;
-        return new Promise((resolve, reject) => {
-            this.findByValue(claim).
-            then(loaded => {
-                return resolve(loaded); // nothing to save
-            }).catch(err => {
-                if (claim.id) {
-                    let stmt = db.prepare('UPDATE claims SET action = ?, resource = ?, condition = ? WHERE rowid = ? AND realm_id = ?');
-                    stmt.run(claim.action, claim.resource, claim.resource, claim.id, claim.realm.id);
-                    stmt.finalize(err => {
+        try {
+          return await this.findByValue(claim);
+        } catch (err) {
+            return this.__save(claim);
+        }
+    }
+
+    async __save(claim: Claim): Promise<Claim> {
+        let savePromise = new Promise((resolve, reject) => {
+            if (claim.id) {
+                let stmt = this.dbHelper.db.prepare('UPDATE claims SET action = ?, resource = ?, condition = ? WHERE rowid = ? AND realm_id = ?');
+                stmt.run(claim.action, claim.resource, claim.resource, claim.id, claim.realm.id);
+                stmt.finalize(err => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not save claim ${String(claim)} due to ${err}`));
+                    } else {
+                        resolve(claim);
+                    }
+                });
+            } else {
+                //console.log(`-------Adding -- ${String(claim)} -- ${err.stack}`);
+                this.dbHelper.db.serialize(() => {
+                    let stmt = this.dbHelper.db.prepare('INSERT INTO claims VALUES (?, ?, ?, ?)');
+                    stmt.run(claim.realm.id, claim.action, claim.resource, claim.condition);
+                    stmt.finalize((err) => {
                         if (err) {
-                            reject(new PersistenceError(`Could not save claim ${String(claim)} due to ${err}`));
+                            console.log(`---------------------Could not add claim ${claim.id} -- ${String(claim)} -- ${err.stack}`);
+                            reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
                         } else {
-                            resolve(claim);
+                            this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
+                                claim.id = row.lastID;
+                                if (err) {
+                                    reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
+                                } else {
+                                    resolve(claim);
+                                }
+                            });
                         }
                     });
-                } else {
-                    //console.log(`-------Adding -- ${String(claim)} -- ${err.stack}`);
-
-                    db.serialize(() => {
-                        let stmt = db.prepare('INSERT INTO claims VALUES (?, ?, ?, ?)');
-                        stmt.run(claim.realm.id, claim.action, claim.resource, claim.condition);
-                        stmt.finalize((err) => {
-                            if (err) {
-                                console.log(`---------------------Could not add claim ${claim.id} -- ${String(claim)} -- ${err.stack}`);
-
-                                reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
-                            } else {
-                                db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                                    claim.id = row.lastID;
-                                    if (err) {
-                                        reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
-                                    } else {
-                                        resolve(claim);
-                                    }
-                                });
-                            }
-                        });
-                    });
-                }
-            });
+                });
+            }
         });
-
+        return await savePromise;
     }
 
     /**
      * This method removes object by id
      * @param {*} id - database id
      */
-    removeById(id: number): Promise<boolean> {
-        if (!id) {
-            return Promise.reject(new PersistenceError('id not specified'));
-        }
+    async removeById(id: number): Promise<boolean> {
+        assert(id, 'id not specified');
         return new Promise((resolve, reject) => {
-			this.dbHelper.db.run('DELETE FROM claims WHERE rowid = ?', id, (err) => {
-				if (err) {
-					reject(new PersistenceError(`Failed to delete claim with id ${id}`));
-				} else {
-        			this.dbHelper.db.run('DELETE FROM principals_claims WHERE claim_id = ?', id, (err) => {
-						if (err) {
-							reject(new PersistenceError(`Failed to delete claim with id ${id}`));
-						} else {
-							resolve(true);
-						}
-					});
-				}
-			});
-		});
+			      this.dbHelper.db.run('DELETE FROM claims WHERE rowid = ?', id, (err) => {
+				        if (err) {
+					          reject(new PersistenceError(`Failed to delete claim with id ${id}`));
+				        } else {
+        			      this.dbHelper.db.run('DELETE FROM principals_claims WHERE claim_id = ?', id, (err) => {
+						            if (err) {
+							              reject(new PersistenceError(`Failed to delete claim with id ${id}`));
+						            } else {
+							              resolve(true);
+						            }
+					          });
+				        }
+			      });
+		    });
     }
 
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>> {
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>> {
         let q:QueryHelper<Claim> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
             return this.__rowToClaim(row);
@@ -204,184 +163,156 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method adds claims to principal
      */
-    addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
-        if (!principal) {
-            return Promise.reject(new PersistenceError('principal not specified'));
-        }
-        if (!claims) {
-            return Promise.reject(new PersistenceError('claims not specified'));
-        }
-        return new Promise((resolve, reject) => {
-            this.dbHelper.db.serialize(() => {
-                claims.forEach(claim => {
-                    this.save(claim).
-                    then(saved => {
+    async addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
+        assert(principal, 'principal not specified');
+        assert(claims, 'claims not specified');
+
+        let promises   = [];
+        claims.forEach(claim => {
+            this.save(claim).then(saved => {
+                promises.push(new Promise((resolve, reject) => {
                         this.dbHelper.db.run('INSERT INTO principals_claims VALUES (?, ?)',
-                            principal.id, saved.id, (err) => {
-                                if (!err) {
-                                    principal.claims.add(claim);
-                                }
-                            });
-                    }).catch(err => {
-                        reject(new PersistenceError(`claim could not be added due to ${err}`));
-                    });
-                });
-                resolve(principal);
+                        principal.id, saved.id, (err) => {
+                            if (err) {
+                                reject(new PersistenceError(`Failed to add claim to principal due to ${err}`));
+                            } else {
+                                principal.claims.add(saved);
+                                resolve(saved);
+                            }
+                        });
+                    }));
             });
         });
+        await Promise.all(promises);
+        return principal;
     }
 
 
     /**
      * This method removes claims from principal
      */
-    removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
-        if (!principal) {
-            return Promise.reject(new PersistenceError('principal not specified'));
-        }
-        if (!claims) {
-            return Promise.reject(new PersistenceError('claims not specified'));
-        }
-        return new Promise((resolve, reject) => {
-            claims.forEach(claim => {
-                this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ? and claim_id = ?', principal.id, claim.id, (err) => {
+    async removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
+        assert(principal, 'principal not specified');
+        assert(claims, 'claims not specified');
+        let promises = [];
+        claims.forEach(claim => {
+            promises.push(new Promise((resolve, reject) => {
+                this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ? and claim_id = ?',
+                principal.id, claim.id, (err) => {
                     if (err) {
                         reject(new PersistenceError(`Failed to delete claim from principal due to ${err}`));
                     } else {
                         principal.claims.delete(claim);
+                        resolve(claim);
                     }
                 });
-            });
-            resolve(principal);
+            }));
         });
+        await promises;
+        return principal;
     }
 
 
     /**
      * This method adds claims to role
      */
-    addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role> {
-        if (!role) {
-            return Promise.reject(new PersistenceError('role not specified'));
-        }
-        if (!claims) {
-            return Promise.reject(new PersistenceError('claims not specified'));
-        }
-        return new Promise((resolve, reject) => {
-            this.dbHelper.db.serialize(() => {
-                claims.forEach(claim => {
-                    this.save(claim).
-                    then(saved => {
-                        this.dbHelper.db.run('INSERT INTO roles_claims VALUES (?, ?)',
-                            role.id, saved.id, (err) => {
-                                if (!err) {
-                                    role.claims.add(claim);
-                                }
-                            });
-                    }).catch(err => {
-                        reject(new PersistenceError(`claim could not be added due to ${err}`));
-                    });
+    async addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role> {
+        assert(role, 'role not specified');
+        assert(claims, 'claims not specified');
+
+        let promises   = [];
+        claims.forEach(claim => {
+            promises.push(new Promise((resolve, reject) => {
+                this.save(claim).then(saved => {
+                    this.dbHelper.db.run('INSERT INTO roles_claims VALUES (?, ?)',
+                    role.id, saved.id, (err) => {
+                    if (err) {
+                        reject(new PersistenceError(`Failed to delete claim from principal due to ${err}`));
+                    } else {
+                        role.claims.add(claim);
+                        resolve(claim);
+                    }
                 });
-                resolve(role);
             });
+        }));
         });
+        await promises;
+        return role;
     }
 
 
     /**
      * This method remove claims from role
      */
-    removeClaimsFromRole(role: Role, claims: Set<Claim>) : Promise<*> {
-        if (!role) {
-            return Promise.reject(new PersistenceError('role not specified'));
-        }
-        if (!claims) {
-            return Promise.reject(new PersistenceError('claims not specified'));
-        }
-        return new Promise((resolve, reject) => {
-            claims.forEach(claim => {
-                this.dbHelper.db.run('DELETE FROM roles_claims WHERE role_id = ? and claim_id = ?', role.id, claim.id, (err) => {
+    async removeClaimsFromRole(role: Role, claims: Set<Claim>) : Promise<Role> {
+        assert(role, 'role not specified');
+        assert(claims, 'claims not specified');
+        let promises = [];
+        claims.forEach(claim => {
+            promises.push(new Promise((resolve, reject) => {
+                this.dbHelper.db.run('DELETE FROM roles_claims WHERE role_id = ? and claim_id = ?',
+                role.id, claim.id, (err) => {
                     if (err) {
                         reject(new PersistenceError(`Failed to delete claim from role due to ${err}`));
                     } else {
                         role.claims.delete(claim);
+                        resolve(claim);
                     }
                 });
-            });
-            resolve(role);
+            }));
         });
+        await promises;
+        return role;
     }
 
     /**
      * This method returns claims by principal that are associated to principal roles or directly to principal
      */
-    loadPrincipalClaims(principal: Principal): Promise<Principal>  {
-        if (!principal) {
-            return Promise.reject(new PersistenceError('principal not specified'));
-        }
+    async loadPrincipalClaims(principal: Principal): Promise<Principal>  {
+        assert(principal, 'principal not specified');
+
         let criteria: Map<string, any> = new Map();
         criteria.set('principal_id', principal.id);
 
         let q:QueryHelper<Claim> = new QueryHelper(this.dbHelper.db);
-        return new Promise((resolve, reject) => {
-            q.query(
+        await q.query(
                 'SELECT principal_id, claim_id AS id, realm_id, action, resource, condition ' +
                 'FROM principals_claims INNER JOIN claims on claims.rowid = principals_claims.claim_id',
                 criteria, (row) => {
-                return this.__rowToClaim(row).
-                then(claim => {
-                    console.log(`>>>>Adding claim ${String(claim)} to principal ${String(principal)}`);
+                return this.__rowToClaim(row).then(claim => {
                     principal.claims.add(claim);
-                    return claim;
+                    console.log(`>>>>Adding claim ${String(claim)} to principal ${String(principal)}`);
                 });
-            }).then(result => {
-                resolve(principal);
-            }).catch(err => {
-                reject(err);
-            });
-        });
+                });
+        return principal;
     }
 
     /**
      * This method load claims for role
      */
-    loadRoleClaims(role: Role): Promise<Role> {
-        if (!role) {
-            return Promise.reject(new PersistenceError('role not specified'));
-        }
+    async loadRoleClaims(role: Role): Promise<Role> {
+        assert(role, 'role not specified');
+
         let criteria: Map<string, any> = new Map();
         criteria.set('role_id', role.id);
 
         let q:QueryHelper<Claim> = new QueryHelper(this.dbHelper.db);
-        return new Promise((resolve, reject) => {
-            q.query(
+        await q.query(
                 'SELECT role_id, claim_id AS id, realm_id, action, resource, condition ' +
                 'FROM roles_claims INNER JOIN claims on claims.rowid = roles_claims.claim_id',
                 criteria, (row) => {
-                return this.__rowToClaim(row).
-                then(claim => {
-                    role.claims.add(claim);
+                return this.__rowToClaim(row).then(claim => {
                     console.log(`>>>>Adding claim ${String(claim)} to role ${String(role)}`);
-                    return claim;
-                }).catch(err => {
-                    throw new PersistenceError(`Failed to load role claims for ${String(role)} due to ${err}`);
-                })
-            }).then(result => {
-                resolve(role);
-            }).catch(err => {
-                reject(err);
+                    role.claims.add(claim);
+                });
             });
-         });
+        return role;
     }
 
 
-    __rowToClaim(row: any): Promise<Claim> {
-        return this.realmRepository.findById(row.realm_id).
-        then(realm => {
-            return new ClaimImpl(row.id, realm, row.action, row.resource, row.condition);
-        }).catch(err => {
-            throw new PersistenceError(`Could not find realm for claim ${row} due to ${err}`);
-        });
+    async __rowToClaim(row: any): Promise<Claim> {
+        let promise     = this.realmRepository.findById(row.realm_id);
+        let realm       = await promise;
+        return new ClaimImpl(row.id, realm, row.action, row.resource, row.condition);
     }
-
 }

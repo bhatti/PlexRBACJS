@@ -24,9 +24,9 @@ class SecurityManagerImpl implements SecurityManager {
      * @param {*} request - encapsulates request to check
      * @return - true if access is granted, false otherwise.
      */
-    check(request: SecurityAccessRequest): Promise<boolean> {
-        return this.securityService.getPrincipal(request.realmName, request.principalName).
-        then(principal => {
+    async check(request: SecurityAccessRequest): Promise<boolean> {
+        try {
+            let principal = await this.securityService.getPrincipal(request.realmName, request.principalName);
             let allClaims = principal.allClaims();
             allClaims.forEach(claim => {
                 if (claim.implies(request.action, request.resource)) {
@@ -44,8 +44,8 @@ class SecurityManagerImpl implements SecurityManager {
                 }
             });
             return false;
-        }).catch(err => {
+        } catch(err) {
             throw new AuthorizationError(`Failed to authorize ${String(request)} due to ${err}`);
-        });
+        }
     }
 }

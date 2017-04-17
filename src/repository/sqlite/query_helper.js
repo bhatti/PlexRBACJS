@@ -13,11 +13,11 @@ export class QueryHelper<T> {
         this.db = theDB;
     }
 
-    query(
+    async query(
         prefixQuery: string,
         criteria: Map<string, any>,
-        mapper: (row: any) => Promise<T>,
-        options: ?QueryOptions = null): Promise<Array<T>> {
+        mapper: (row: any) => T,
+        options: ?QueryOptions = null): Array<T> {
         //
         var query = criteria.size > 0 ? prefixQuery + ' WHERE 1=1' : prefixQuery;
         var params = [];
@@ -32,16 +32,16 @@ export class QueryHelper<T> {
             this.db.all(query, params, (err, rows) => {
                 if (err) {
                     reject(err);
-                } else if (rows) {
-                    var resultPromises = [];
+                } else if (rows && rows.length > 0) {
+                    let result = [];
                     rows.forEach(row => {
-                        //console.log(`------query got ${JSON.stringify(row)} -- from ${query}`);
-                        let promise = mapper(row);
-                        resultPromises.push(promise);
-                    });
-                    return Promise.all(resultPromises).
-                    then(result => {
-                        resolve(result);
+                        mapper(row).then(obj => {
+                            result.push(obj);
+                            //console.log(`------query got ${JSON.stringify(row)} -- from ${query}`);
+                            if (result.length == rows.length) {
+                                resolve(result);
+                            }
+                        });
                     });
                 } else {
                     resolve([]);
