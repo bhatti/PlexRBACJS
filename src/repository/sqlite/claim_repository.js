@@ -90,7 +90,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     }
 
     async __save(claim: Claim): Promise<Claim> {
-        let savePromise = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             if (claim.id) {
                 let stmt = this.dbHelper.db.prepare('UPDATE claims SET action = ?, resource = ?, condition = ? WHERE rowid = ? AND realm_id = ?');
                 stmt.run(claim.action, claim.resource, claim.resource, claim.id, claim.realm.id);
@@ -102,29 +102,19 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                     }
                 });
             } else {
-                //console.log(`-------Adding -- ${String(claim)} -- ${err.stack}`);
-                this.dbHelper.db.serialize(() => {
-                    let stmt = this.dbHelper.db.prepare('INSERT INTO claims VALUES (?, ?, ?, ?)');
-                    stmt.run(claim.realm.id, claim.action, claim.resource, claim.condition);
-                    stmt.finalize((err) => {
-                        if (err) {
-                            console.log(`---------------------Could not add claim ${claim.id} -- ${String(claim)} -- ${err.stack}`);
-                            reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
-                        } else {
-                            this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                                claim.id = row.lastID;
-                                if (err) {
-                                    reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
-                                } else {
-                                    resolve(claim);
-                                }
-                            });
-                        }
-                    });
+                let stmt = this.dbHelper.db.prepare('INSERT INTO claims VALUES (?, ?, ?, ?)');
+                stmt.run(claim.realm.id, claim.action, claim.resource, claim.condition, function(err) {
+                    claim.id = this.lastID;
+                });
+                stmt.finalize((err) => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not insert claim ${String(claim)} due to ${err}`));
+                    } else {
+                        resolve(claim);
+                    }
                 });
             }
         });
-        return savePromise;
     }
 
     /**
@@ -167,23 +157,29 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         assert(principal, 'principal not specified');
         assert(claims, 'claims not specified');
 
-        let promises   = [];
+        let savePromises = [];
         claims.forEach(claim => {
-            this.save(claim).then(saved => {
-                promises.push(new Promise((resolve, reject) => {
+            savePromises.push(new Promise((resolve, reject) => {
+                this.save(claim).then(saved => {
+                    resolve(saved);
+                }).catch(err => {
+                    reject(err);
+                });
+            }));
+        });
+        await Promise.all(savePromises);
+        //
+        let relationPromises = [];
+        claims.forEach(claim => {
+            relationPromises.push(new Promise((resolve, reject) => {
                         this.dbHelper.db.run('INSERT INTO principals_claims VALUES (?, ?)',
-                        principal.id, saved.id, (err) => {
-                            if (err) {
-                                reject(new PersistenceError(`Failed to add claim to principal due to ${err}`));
-                            } else {
-                                principal.claims.add(saved);
-                                resolve(saved);
-                            }
+                        principal.id, claim.id, (err) => {
+                            principal.claims.add(claim);
+                            resolve(claim);
                         });
                     }));
-            });
         });
-        await Promise.all(promises);
+        await Promise.all(relationPromises);
         return principal;
     }
 
@@ -220,23 +216,29 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         assert(role, 'role not specified');
         assert(claims, 'claims not specified');
 
-        let promises   = [];
+        let savePromises = [];
         claims.forEach(claim => {
-            promises.push(new Promise((resolve, reject) => {
+            savePromises.push(new Promise((resolve, reject) => {
                 this.save(claim).then(saved => {
-                    this.dbHelper.db.run('INSERT INTO roles_claims VALUES (?, ?)',
-                    role.id, saved.id, (err) => {
-                    if (err) {
-                        reject(new PersistenceError(`Failed to delete claim from principal due to ${err}`));
-                    } else {
-                        role.claims.add(claim);
-                        resolve(claim);
-                    }
+                    resolve(saved);
+                }).catch(err => {
+                    reject(err);
                 });
-            });
-        }));
+            }));
         });
-        await promises;
+        await Promise.all(savePromises);
+        //
+        let relationPromises = [];
+        claims.forEach(claim => {
+            relationPromises.push(new Promise((resolve, reject) => {
+                this.dbHelper.db.run('INSERT INTO roles_claims VALUES (?, ?)',
+                role.id, claim.id, (err) => {
+                    role.claims.add(claim);
+                    resolve(claim);
+                });
+            }));
+        });
+        await Promise.all(relationPromises);
         return role;
     }
 
@@ -281,9 +283,8 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                 criteria, (row) => {
                 return this.__rowToClaim(row).then(claim => {
                     principal.claims.add(claim);
-                    console.log(`>>>>Adding claim ${String(claim)} to principal ${String(principal)}`);
                 });
-                });
+            });
         return principal;
     }
 
@@ -302,7 +303,6 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                 'FROM roles_claims INNER JOIN claims on claims.rowid = roles_claims.claim_id',
                 criteria, (row) => {
                 return this.__rowToClaim(row).then(claim => {
-                    console.log(`>>>>Adding claim ${String(claim)} to role ${String(role)}`);
                     role.claims.add(claim);
                 });
             });

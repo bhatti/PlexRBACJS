@@ -99,21 +99,18 @@ export class RealmRepositorySqlite implements RealmRepository {
         } else {
             //
             return new Promise((resolve, reject) => {
-                this.dbHelper.db.serialize(() => {
-                    let stmt = this.dbHelper.db.prepare('INSERT INTO realms VALUES (?)');
-                    stmt.run(realm.realmName);
-                    stmt.finalize(() => {
-                        this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                            realm.id = row.lastID;
-                            if (err) {
-                                reject(new PersistenceError(`Could not add ${String(realm)} due to ${err}`));
-                            } else {
-                                this.cache.set('realm', `id_${realm.id}`, realm);
-                                this.cache.set('realm', realm.realmName, realm);
-                                resolve(realm);
-                            }
-                        });
-                    });
+                let stmt = this.dbHelper.db.prepare('INSERT INTO realms VALUES (?)');
+                stmt.run(realm.realmName, function(err) {
+                    realm.id = this.lastID;
+                });
+                stmt.finalize((err) => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not add ${String(realm)} due to ${err}`));
+                    } else {
+                        this.cache.set('realm', `id_${realm.id}`, realm);
+                        this.cache.set('realm', realm.realmName, realm);
+                        resolve(realm);
+                    }
                 });
             });
         }

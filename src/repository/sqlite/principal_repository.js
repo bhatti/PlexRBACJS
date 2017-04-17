@@ -50,7 +50,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
     async findById(id: number): Promise<Principal> {
         assert(id, 'principal-id not specified');
 
-        let findPromise = new Promise((resolve, reject) => {
+        return new Promise((resolve, reject) => {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find principal with id ${id}`));
@@ -64,7 +64,6 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                 }
             });
         });
-        return findPromise;
     }
 
     /**
@@ -107,15 +106,12 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
             throw new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`);
         } else {
             return new Promise((resolve, reject) => {
-                this.dbHelper.db.serialize(() => {
-                    let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
-                    stmt.run(principal.realm.id, principal.principalName);
-                    stmt.finalize(() => {
-                        this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                            principal.id = row.lastID;
-                            resolve(principal);
-                        });
-                    });
+                let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
+                stmt.run(principal.realm.id, principal.principalName, function(err) {
+                    principal.id = this.lastID;
+                });
+                stmt.finalize(() => {
+                    resolve(principal);
                 });
             });
         }

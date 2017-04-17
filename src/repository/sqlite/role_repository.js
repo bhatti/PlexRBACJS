@@ -105,27 +105,21 @@ export class RoleRepositorySqlite implements RoleRepository {
     async save(role: Role): Promise<Role> {
         assert(role, 'role not specified');
         assert(role.realm && role.realm.id, 'realm not specified');
-
+        //
         if (role.id) {
             throw new PersistenceError(`Role is immutable and cannot be updated ${String(role)}`);
         } else {
             return new Promise((resolve, reject) => {
-                this.dbHelper.db.serialize(() => {
-                    let stmt = this.dbHelper.db.prepare('INSERT INTO roles VALUES (?, ?)');
-                    stmt.run(role.realm.id, role.roleName);
-                    stmt.finalize((err) => {
-                        if (err) {
+                let stmt = this.dbHelper.db.prepare('INSERT INTO roles VALUES (?, ?)');
+                stmt.run(role.realm.id, role.roleName, function(err) {
+                    role.id = this.lastID;
+                });
+                stmt.finalize((err) => {
+                    if (err) {
                         reject(new PersistenceError(`Could not add ${String(role)} due to ${err}`));
-                        }
-                        this.dbHelper.db.get('SELECT last_insert_rowid() AS lastID', (err, row) => {
-                            role.id = row.lastID;
-                            if (err) {
-                                reject(new PersistenceError(`Could not add ${String(role)} due to ${err}`));
-                            } else {
-                                resolve(role);
-                            }
-                        });
-                    });
+                    } else {
+                        resolve(role);
+                    }
                 });
             });
         }
