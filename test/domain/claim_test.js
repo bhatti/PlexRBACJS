@@ -6,7 +6,7 @@ describe('Claim', function() {
   let realm = new RealmImpl(null, 'domain');
 
   describe('#constructor', function() {
-    it('without realm should fail', function() {
+    it('should fail without realm should fail', function() {
       try {
         let claim = new ClaimImpl();
         assert.notOk('should have failed');
@@ -14,39 +14,45 @@ describe('Claim', function() {
       }
     });
   });
+
   describe('#constructor', function() {
-    it('without realm should fail', function() {
+    it('should not fail without condition', function() {
       let claim = new ClaimImpl(null, realm, 'action', 'resource', '');
       claim.condition = null;
       assert.notOk(claim.hasCondition());
     });
   });
+
   describe('#hasCondition', function() {
-    it('should return false when the condition has expression', function() {
+    it('should succeed with condition', function() {
       let claim = new ClaimImpl(null, realm, 'action', 'resource', 'x = y');
       assert.ok(claim.hasCondition());
     });
   });
+
   describe('#implies', function() {
-    it('should return false when the claim has different action', function() {
+    it(' with different action should not match', function() {
       let claim = new ClaimImpl(1, realm, 'read', 'file', '');
       assert.notOk(claim.implies('write', 'file'));
     });
   });
+
   describe('#implies', function() {
-    it('should return true when the claim has same action/resource', function() {
+    it('claim with same action/resource should match', function() {
       let claim = new ClaimImpl(1, realm, 'read', 'file', '');
       assert.ok(claim.implies('read', 'file'));
     });
   });
+
   describe('#implies', function() {
-    it('should return true when the claim has same wildcard action', function() {
+    it('claim with wildcard should match', function() {
       let claim = new ClaimImpl(1, realm, '.*', 'database', '');
       assert.ok(claim.implies('read', 'database'));
     });
   });
+
   describe('#implies', function() {
-    it('should return true when the claim has same regex action', function() {
+    it('claim with regex should match', function() {
       let claim = new ClaimImpl(1, realm, '(write|read|update|delete)', 'database', '');
       assert.ok(claim.implies('read', 'database'));
       assert.ok(claim.implies('write', 'database'));

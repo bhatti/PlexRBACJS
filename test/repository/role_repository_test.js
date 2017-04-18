@@ -100,7 +100,7 @@ describe('RoleRepository', function() {
   describe('#saveGetByName', function() {
     it('should not be able to get role by unknown name', async function() {
         try {
-            let role = await this.roleRepository.findByName('realm-name', 'unknown-role').
+            let role = await this.roleRepository.findByName('non-existing-realm-name', 'unknown-role').
             assert(false, 'should not return role');
         } catch(err) {
         }

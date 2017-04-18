@@ -36,6 +36,7 @@ export class PrincipalImpl implements Principal {
         //
         assert(theRealm, 'realm is required');
         assert(thePrincipalName, 'principal is required');
+        //
         this.id = theId;
         this.realm = theRealm;
         this.principalName = thePrincipalName;
