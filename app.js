@@ -68,12 +68,10 @@ server.listen(config.port, () => {
     server.principalRepository = new PrincipalRepositorySqlite(server.dbHelper, server.realmRepository, server.roleRepository, server.claimRepository, new DefaultSecurityCache());
 
     //
-    //server.dbHelper.createTables(() => { });
+    server.dbHelper.createTables(() => { });
 
 	//
     require('./routes/realm_service');
-
-    //require('./routes/claim_service');
-    //require('./routes/role_service');
-    //require('./routes/principal_service');
+    require('./routes/role_service');
+    require('./routes/principal_service');
 })

@@ -25,11 +25,18 @@ server.post('/realms/:realmId/roles', function(req, res, next) {
 
     let json = JSON.parse(req.body);
 
+    if (!json.realmName) {
+	    return next(new errors.MissingParameterError('Role JSON body is missing realmName.'));
+    }
+
     try {
-        let realm = new RealmImpl(Number.parseInt(req.params.realmId));
+        let realm = new RealmImpl('');
+        realm.id  = Number.parseInt(req.params.realmId);
         let role  = new RoleImpl(realm, json.realmName);
+        json.claims.forEach(claim => role.claims.add(claim));
+        //
         let saved = await server.roleRepository.save(role);
-        res.send(201);
+        res.send(201, saved);
         next();
     } catch (err) {
         log.error(`Failed to save ${req.body} due to ${err}`);
@@ -50,7 +57,7 @@ server.get('/realms/:realmId/roles', function(req, res, next) {
     res.send(results);
     next();
 
-})
+});
 
 
 /**
@@ -67,7 +74,7 @@ server.get('/realms/:realmId/roles/:roleId', function(req, res, next) {
         next(new errors.ResourceNotFoundError('Could not find role'));
 	}
 
-})
+});
 
 
 /**
@@ -75,56 +82,48 @@ server.get('/realms/:realmId/roles/:roleId', function(req, res, next) {
  */
 server.put('/realms/:realmId/roles/:roleId', function(req, res, next) {
 
-    let data = req.body || {}
+    if (!req.body) {
+	    return next(new errors.MissingParameterError('Role JSON body could not be found.'));
+    }
 
-    if (!data._id) {
-		_.extend(data, {
-			_id: req.params.roleId
-		})
-	}
+    let json = JSON.parse(req.body);
 
-    RoleImpl.findOne({ _id: req.params.roleId }, function(err, doc) {
+    if (!json.id) {
+	    return next(new errors.MissingParameterError('Role JSON body is missing id.'));
+    }
+    if (!json.realmName) {
+	    return next(new errors.MissingParameterError('Role JSON body is missing realmName.'));
+    }
 
-		if (err) {
-			log.error(err)
-			return next(new errors.InvalidContentError(err.errors.name.message))
-		} else if (!doc) {
-			return next(new errors.ResourceNotFoundError('The resource you requested could not be found.'))
-		}
+    try {
+        let realm = new RealmImpl('');
+        realm.id  = Number.parseInt(req.params.realmId);
+        let role  = new RoleImpl(realm, json.realmName);
+        role.id   = json.id;
+        json.claims.forEach(claim => role.claims.add(claim));
+        //
+        let saved = await server.roleRepository.save(role);
+		res.send(200, saved)
+        next();
+    } catch (err) {
+        log.error(`Failed to save ${req.body} due to ${err}`);
+        return next(new errors.InternalError(err.message));
+    }
 
-		RoleImpl.update({ _id: data._id }, data, function(err) {
-
-
-			if (err) {
-				log.error(err)
-				return next(new errors.InvalidContentError(err.errors.name.message))
-			}
-
-
-			res.send(200, data)
-            next()
-
-		})
-
-	})
-
-})
+});
 
 /**
  * DELETE
  */
 server.del('/:realmId/roles/:roleId', function(req, res, next) {
 
-    RoleImpl.remove({ _id: req.params.roleId }, function(err) {
-
-		if (err) {
-			log.error(err)
-			return next(new errors.InvalidContentError(err.errors.name.message))
-		}
-
+	try {
+    	let realm = await server.roleRepository.removeById(req.params.roleId);
 		res.send(204)
-        next()
+        next();
+	} catch (err) {
+        log.error(`Failed to remove role due to ${err}`);
+        next(new errors.ResourceNotFoundError('Could not remove role'));
+	}
 
-	})
-
-})
+});

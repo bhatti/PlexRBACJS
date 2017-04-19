@@ -11,23 +11,32 @@ const _      = require('lodash'),
 /**
  * POST
  */
-server.post('/:realm_id/principals', function(req, res, next) {
+server.post('/realms/:realm_id/principals', function(req, res, next) {
 
-    let data = req.body || {}
+    if (!req.body) {
+	    return next(new errors.MissingParameterError('Principal JSON body could not be found.'));
+    }
 
-    let principal = new PrincipalImpl(data)
-    principal.save(function(err) {
+    let json = JSON.parse(req.body);
 
-        if (err) {
-            log.error(err)
-            return next(new errors.InternalError(err.message))
-            next()
-        }
+    if (!json.principalName) {
+	    return next(new errors.MissingParameterError('Principal JSON body is missing principalName.'));
+    }
 
-        res.send(201)
-        next()
-
-    })
+    try {
+        let realm       = new RealmImpl('');
+        realm.id        = Number.parseInt(req.params.realmId);
+        let principal   = new PrincipalImpl(realm, json.principalName);
+        json.claims.forEach(claim => principal.claims.add(claim));
+        json.roles.forEach(claim => principal.roles.add(role));
+        //
+        let saved = await server.principalRepository.save(principal);
+        res.send(201, saved);
+        next();
+    } catch (err) {
+        log.error(`Failed to save ${req.body} due to ${err}`);
+        return next(new errors.InternalError(err.message));
+    }
 
 })
 
@@ -35,19 +44,13 @@ server.post('/:realm_id/principals', function(req, res, next) {
 /**
  * LIST
  */
-server.get('/:realm_id/principals', function(req, res, next) {
+server.get('/realms/:realm_id/principals', function(req, res, next) {
 
-    PrincipalImpl.apiQuery(req.params, function(err, docs) {
-
-        if (err) {
-            log.error(err)
-            return next(new errors.InvalidContentError(err.errors.name.message))
-        }
-
-        res.send(docs)
-        next()
-
-    })
+    let criteria    = new Map();
+    criteria.set('realm_id', Number.parseInt(req.params.realmId));
+    let results = await server.principalsRepository.search(criteria);
+    res.send(results);
+    next();
 
 })
 
@@ -55,19 +58,16 @@ server.get('/:realm_id/principals', function(req, res, next) {
 /**
  * GET
  */
-server.get('/:realm_id/principals/:principal_id', function(req, res, next) {
+server.get('/realms/:realm_id/principals/:principalId', function(req, res, next) {
 
-    PrincipalImpl.findOne({ _id: req.params.principal_id }, function(err, doc) {
-
-        if (err) {
-            log.error(err)
-            return next(new errors.InvalidContentError(err.errors.name.message))
-        }
-
-        res.send(doc)
-        next()
-
-    })
+	try {
+    	let realm = await server.principalRepository.findById(req.params.principalId);
+        res.send(realm);
+        next();
+	} catch (err) {
+        log.error(`Failed to get principal due to ${err}`);
+        next(new errors.ResourceNotFoundError('Could not find principal'));
+	}
 
 })
 
@@ -75,59 +75,51 @@ server.get('/:realm_id/principals/:principal_id', function(req, res, next) {
 /**
  * UPDATE
  */
-server.put('/:realm_id/principals/:principal_id', function(req, res, next) {
+server.put('/realms/:realm_id/principals/:principalId', function(req, res, next) {
 
-    let data = req.body || {}
+    if (!req.body) {
+	    return next(new errors.MissingParameterError('Principal JSON body could not be found.'));
+    }
 
-    if (!data._id) {
-		_.extend(data, {
-			_id: req.params.principal_id
-		})
-	}
+    let json = JSON.parse(req.body);
 
-    PrincipalImpl.findOne({ _id: req.params.principal_id }, function(err, doc) {
+    if (!json.id) {
+	    return next(new errors.MissingParameterError('Principal JSON body is missing id.'));
+    }
+    if (!json.realmName) {
+	    return next(new errors.MissingParameterError('Principal JSON body is missing realmName.'));
+    }
 
-		if (err) {
-			log.error(err)
-			return next(new errors.InvalidContentError(err.errors.name.message))
-		} else if (!doc) {
-			return next(new errors.ResourceNotFoundError('The resource you requested could not be found.'))
-		}
-
-		PrincipalImpl.update({ _id: data._id }, data, function(err) {
-
-
-			if (err) {
-				log.error(err)
-				return next(new errors.InvalidContentError(err.errors.name.message))
-			}
-
-
-			res.send(200, data)
-            next()
-
-		})
-
-	})
+    try {
+        let realm = new RealmImpl('');
+        realm.id  = Number.parseInt(req.params.realmId);
+        let principal   = new PrincipalImpl(realm, json.principalName);
+        json.claims.forEach(claim => principal.claims.add(claim));
+        json.roles.forEach(claim => principal.roles.add(role));
+        //
+        let saved = await server.principalRepository.save(principal);
+		res.send(200, saved)
+        next();
+    } catch (err) {
+        log.error(`Failed to save ${req.body} due to ${err}`);
+        return next(new errors.InternalError(err.message));
+    }
 
 })
 
 /**
  * DELETE
  */
-server.del('/:realm_id/principals/:principal_id', function(req, res, next) {
+server.del('/realms/:realm_id/principals/:principalId', function(req, res, next) {
 
-    PrincipalImpl.remove({ _id: req.params.principal_id }, function(err) {
-
-		if (err) {
-			log.error(err)
-			return next(new errors.InvalidContentError(err.errors.name.message))
-		}
-
+	try {
+    	await server.principalRepository.removeById(req.params.principalId);
 		res.send(204)
-        next()
-
-	})
+        next();
+	} catch (err) {
+        log.error(`Failed to remove principal due to ${err}`);
+        next(new errors.ResourceNotFoundError('Could not remove principal'));
+	}
 
 })
 
