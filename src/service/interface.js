@@ -58,20 +58,6 @@ export interface SecurityService {
     removeRole(role: Role): Promise<boolean>;
 
     /**
-     * This method adds role to principal
-     * @param {*} principal
-     * @param {*} roles
-     */
-    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
-
-    /**
-     * This method removes role from principal
-     * @param {*} principal
-     * @param {*} roles
-     */
-    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
-
-    /**
      * This method adds claim
      * @param {*} claim - to save
      */
@@ -87,39 +73,10 @@ export interface SecurityService {
     /**
      * This method adds set of roles as parent
      */
-    addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>;
+    addParentsToRole(role: Role, parents: Array<Role>): Promise<Role>;
 
     /**
      * This method remove set of roles as parent
      */
-    removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>;
-
-    /**
-     * This method adds claims to principal
-     */
-    addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
-
-    /**
-     * This method adds claims to role
-     */
-    addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role>;
-
-    /**
-     * This method removes claims from principal
-     */
-    removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
-
-    /**
-     * This method remove claims from role
-     */
-    removeClaimsFromRole(role: Role, claims: Set<Claim>): Promise<Role>;
-
-    /**
-     * This method loads claims for given principal
-     */
-    loadPrincipalClaims(principal: Principal): Promise<Principal>;
-    /**
-     * This method loads claims for given role
-     */
-    loadRoleClaims(role: Role): Promise<Role>;
+    removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role>;
 }

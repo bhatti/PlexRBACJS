@@ -1,5 +1,6 @@
 
 /* @flow Interface file */
+import {UniqueArray}        from '../util/unique_array';
 
 /**
  * Realm represents domain of application, each application will have a unique
@@ -20,11 +21,11 @@ export interface Role {
 
     realm:      Realm;          // realm for the application
 
-    roleName:   string;         // role-name 
+    roleName:   string;         // role-name
 
-    parents:    Set<Role>;      // set of claims
+    parents:    UniqueArray<Role>;      // set of claims
 
-    claims:     Set<Claim>;     // set of claims
+    claims:     UniqueArray<Claim>;     // set of claims
 }
 
 /**
@@ -45,19 +46,19 @@ export interface Principal {
     /**
      * principal name such as username
      */
-    principalName: string;
+    principalName:  string;
 
     /**
      * set of claims
      */
-    claims:         Set<Claim>;
+    claims:         UniqueArray<Claim>;
 
     /**
      * set of roles
      */
-    roles:          Set<Role>;
+    roles:          UniqueArray<Role>;
 
-    allClaims():    Set<Claim>; 
+    allClaims():    UniqueArray<Claim>;
 }
 
 /**
@@ -70,7 +71,7 @@ export interface Claim {
      * Unique database id
      */
     id:         number;
-    
+
     /**
      * realm for the application
      */
@@ -93,8 +94,8 @@ export interface Claim {
 
     /**
      * This method checks if given action and resource matches internal action and action.
-     * It tries to compare action and resource directly or using regex 
-     * 
+     * It tries to compare action and resource directly or using regex
+     *
      * @param {*} action - action to perform
      * @param {*} resource - target resource that will be acted upon
      */

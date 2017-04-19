@@ -116,33 +116,26 @@ export interface RoleRepository extends Repository<Role> {
     search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Role>>;
 
     /**
-     * This method adds role to principal
+     * This method save role to principal
      * @param {*} principal
      * @param {*} roles
      */
-    addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
-
-    /**
-     * This method removes role from principal
-     * @param {*} principal
-     * @param {*} role
-     */
-    removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal>;
+    __savePrincipalRoles(principal: Principal): Promise<Principal>;
 
     /**
      * This method loads roles for principal
      */
-    loadPrincipalRoles(principal: Principal): Promise<Principal>;
+    __loadPrincipalRoles(principal: Principal): Promise<Principal>;
 
    /**
      * This method adds set of roles as parent
      */
-    addParentsToRole(role: Role, parents: Set<Role>): Promise<Role>;
+    addParentsToRole(role: Role, parents: Array<Role>): Promise<Role>;
 
     /**
      * This method remove set of roles as parent
      */
-    removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role>;
+    removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role>;
 }
 
 /**
@@ -173,34 +166,24 @@ export interface ClaimRepository extends Repository<Claim> {
     search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>>;
 
     /**
-     * This method adds claims to principal
+     * This method save claims for principal
      */
-    addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
+    __savePrincipalClaims(principal: Principal): Promise<Principal>;
 
     /**
-     * This method adds claims to role
+     * This method save claims for role
      */
-    addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role>;
-
-   /**
-     * This method removes claims from principal
-     */
-    removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal>;
-
-    /**
-     * This method remove claims from role
-     */
-    removeClaimsFromRole(role: Role, claims: Set<Claim>): Promise<Role>;
+    __saveRoleClaims(role: Role): Promise<Role>;
 
     /**
      * This method loads claims for given principal using claims associated with role and principal
      */
-    loadPrincipalClaims(principal: Principal): Promise<Principal>;
+    __loadPrincipalClaims(principal: Principal): Promise<Principal>;
 
     /**
      * This method load claims for role
      */
-    loadRoleClaims(role: Role): Promise<Role>;
+    __loadRoleClaims(role: Role): Promise<Role>;
 }
 
 /**

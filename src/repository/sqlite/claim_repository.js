@@ -151,14 +151,25 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     }
 
     /**
-     * This method adds claims to principal
+     * This method save claims for principal
      */
-    async addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
-        assert(principal, 'principal not specified');
-        assert(claims, 'claims not specified');
+    async __savePrincipalClaims(principal: Principal): Promise<Principal> {
+        assert(principal && principal.id, 'principal not specified');
 
+        let deletePromise = new Promise((resolve, reject) => {
+            this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ?',
+            principal.id, (err) => {
+                if (err) {
+                    reject(new PersistenceError(`Failed to delete claim from principal due to ${err}`));
+                } else {
+                    resolve();
+                }
+            });
+        });
+        await deletePromise;
+        //
         let savePromises = [];
-        claims.forEach(claim => {
+        principal.claims.forEach(claim => {
             savePromises.push(new Promise((resolve, reject) => {
                 this.save(claim).then(saved => {
                     resolve(saved);
@@ -170,7 +181,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         await Promise.all(savePromises);
         //
         let relationPromises = [];
-        claims.forEach(claim => {
+        principal.claims.forEach(claim => {
             relationPromises.push(new Promise((resolve, reject) => {
                         this.dbHelper.db.run('INSERT INTO principals_claims VALUES (?, ?)',
                         principal.id, claim.id, (err) => {
@@ -185,39 +196,25 @@ export class ClaimRepositorySqlite implements ClaimRepository {
 
 
     /**
-     * This method removes claims from principal
+     * This method save claims for role
      */
-    async removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
-        assert(principal, 'principal not specified');
-        assert(claims, 'claims not specified');
-        let promises = [];
-        claims.forEach(claim => {
-            promises.push(new Promise((resolve, reject) => {
-                this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ? and claim_id = ?',
-                principal.id, claim.id, (err) => {
-                    if (err) {
-                        reject(new PersistenceError(`Failed to delete claim from principal due to ${err}`));
-                    } else {
-                        principal.claims.delete(claim);
-                        resolve(claim);
-                    }
-                });
-            }));
+    async __saveRoleClaims(role: Role): Promise<Role> {
+        assert(role && role.id, 'role not specified');
+
+        let deletePromise = new Promise((resolve, reject) => {
+            this.dbHelper.db.run('DELETE FROM roles_claims WHERE role_id = ?',
+            role.id, (err) => {
+                if (err) {
+                    reject(new PersistenceError(`Failed to delete claim from role due to ${err}`));
+                } else {
+                    resolve();
+                }
+            });
         });
-        await promises;
-        return principal;
-    }
-
-
-    /**
-     * This method adds claims to role
-     */
-    async addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role> {
-        assert(role, 'role not specified');
-        assert(claims, 'claims not specified');
+        await deletePromise;
 
         let savePromises = [];
-        claims.forEach(claim => {
+        role.claims.forEach(claim => {
             savePromises.push(new Promise((resolve, reject) => {
                 this.save(claim).then(saved => {
                     resolve(saved);
@@ -229,7 +226,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         await Promise.all(savePromises);
         //
         let relationPromises = [];
-        claims.forEach(claim => {
+        role.claims.forEach(claim => {
             relationPromises.push(new Promise((resolve, reject) => {
                 this.dbHelper.db.run('INSERT INTO roles_claims VALUES (?, ?)',
                 role.id, claim.id, (err) => {
@@ -242,36 +239,11 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         return role;
     }
 
-
-    /**
-     * This method remove claims from role
-     */
-    async removeClaimsFromRole(role: Role, claims: Set<Claim>) : Promise<Role> {
-        assert(role, 'role not specified');
-        assert(claims, 'claims not specified');
-        let promises = [];
-        claims.forEach(claim => {
-            promises.push(new Promise((resolve, reject) => {
-                this.dbHelper.db.run('DELETE FROM roles_claims WHERE role_id = ? and claim_id = ?',
-                role.id, claim.id, (err) => {
-                    if (err) {
-                        reject(new PersistenceError(`Failed to delete claim from role due to ${err}`));
-                    } else {
-                        role.claims.delete(claim);
-                        resolve(claim);
-                    }
-                });
-            }));
-        });
-        await promises;
-        return role;
-    }
-
     /**
      * This method returns claims by principal that are associated to principal roles or directly to principal
      */
-    async loadPrincipalClaims(principal: Principal): Promise<Principal>  {
-        assert(principal, 'principal not specified');
+    async __loadPrincipalClaims(principal: Principal): Promise<Principal>  {
+        assert(principal && principal.id, 'principal not specified');
 
         let criteria: Map<string, any> = new Map();
         criteria.set('principal_id', principal.id);
@@ -291,7 +263,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method load claims for role
      */
-    async loadRoleClaims(role: Role): Promise<Role> {
+    async __loadRoleClaims(role: Role): Promise<Role> {
         assert(role, 'role not specified');
 
         let criteria: Map<string, any> = new Map();
@@ -313,6 +285,8 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     async __rowToClaim(row: any): Promise<Claim> {
         let promise     = this.realmRepository.findById(row.realm_id);
         let realm       = await promise;
-        return new ClaimImpl(row.id, realm, row.action, row.resource, row.condition);
+        let claim = new ClaimImpl(realm, row.action, row.resource, row.condition);
+        claim.id = row.id;
+        return claim;
     }
 }

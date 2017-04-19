@@ -91,25 +91,7 @@ export class SecurityServiceImpl implements SecurityService {
      */
     async removeRole(role: Role): Promise<boolean> {
         return this.roleRepository.removeById(role.id);
-    }
-
-    /**
-     * This method adds role to principal
-     * @param {*} principal
-     * @param {*} roles
-     */
-    async addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal> {
-        return this.roleRepository.addRolesToPrincipal(principal, roles);
-    }
-
-    /**
-     * This method removes role from principal
-     * @param {*} principal
-     * @param {*} roles
-     */
-    async removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal> {
-        return this.roleRepository.removeRolesFromPrincipal(principal, roles);
-    }
+    }    
 
     /**
      * This method adds claim
@@ -131,56 +113,15 @@ export class SecurityServiceImpl implements SecurityService {
    /**
      * This method adds set of roles as parent
      */
-    async addParentsToRole(role: Role, parents: Set<Role>): Promise<Role> {
+    async addParentsToRole(role: Role, parents: Array<Role>): Promise<Role> {
         return this.roleRepository.addParentsToRole(role, parents);
     }
 
     /**
      * This method remove set of roles as parent
      */
-    async removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role> {
+    async removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role> {
         return this.roleRepository.removeParentsFromRole(role, parents);
     }
 
-    /**
-     * This method adds claims to principal
-     */
-    async addClaimsToPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
-        return this.claimRepository.addClaimsToPrincipal(principal, claims);
-    }
-
-    /**
-     * This method adds claims to role
-     */
-    async addClaimsToRole(role: Role, claims: Set<Claim>): Promise<Role> {
-        return this.claimRepository.addClaimsToRole(role, claims);
-    }
-
-    /**
-     * This method removes claims from principal
-     */
-    async removeClaimsFromPrincipal(principal: Principal, claims: Set<Claim>): Promise<Principal> {
-        return this.claimRepository.removeClaimsFromPrincipal(principal, claims);
-    }
-
-    /**
-     * This method remove claims from role
-     */
-    async removeClaimsFromRole(role: Role, claims: Set<Claim>) : Promise<Role> {
-        return this.claimRepository.removeClaimsFromRole(role, claims);
-    }
-
-    /**
-     * This method loads claims for given principal
-     */
-    async loadPrincipalClaims(principal: Principal): Promise<Principal> {
-        return this.claimRepository.loadPrincipalClaims(principal);
-    }
-
-    /**
-     * This method loads claims for given role
-     */
-    async loadRoleClaims(role: Role): Promise<Role> {
-        return this.claimRepository.loadRoleClaims(role);
-    }
 }

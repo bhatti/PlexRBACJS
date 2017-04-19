@@ -10,12 +10,12 @@ export class SecurityAccessRequest {
     principalName: string;      // principal-name (e.g. username)
 
     action: string;             // action to perform
-    
+
     resource: string;           // target resource
-    
+
     context: Map<string, any>;  // context
-    
-    constructor(theRealm: string, 
+
+    constructor(theRealm: string,
                 thePrincipal: string,
                 theAction: string,
                 theResource: string,
@@ -26,17 +26,18 @@ export class SecurityAccessRequest {
         assert(theAction, 'action is required');
         assert(theResource, 'resource is required');
         assert(theContext, 'context is required');
+        //
         this.realmName      = theRealm;
         this.principalName  = thePrincipal;
         this.action         = theAction;
         this.resource       = theResource;
         this.context        = theContext;
     }
- 
+
     /**
      * returns textual representation
      */
     toString() {
         return `(${this.realmName}, ${this.principalName}, ${this.resource})`;
-    }            
+    }
 }

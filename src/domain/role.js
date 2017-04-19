@@ -1,35 +1,40 @@
 /*@flow*/
 
 import type {Claim, Role, Realm}   from './interface';
+import {UniqueArray}               from '../util/unique_array';
+import type {UniqueIdentifier}     from '../util/unique_id';
+
 const assert = require('assert');
 
 
 /**
  * RoleImpl implements Role for defining function or job
  */
-export class RoleImpl implements Role {
+export class RoleImpl implements Role, UniqueIdentifier {
     id:         number;         // unique database id
 
     realm:      Realm;          // realm for the application
 
     roleName:   string;         // role-name
 
-    claims:     Set<Claim>;     // set of claims
+    claims:     UniqueArray<Claim>;     // set of claims
 
-    parents:    Set<Role>;      // optional parent role
+    parents:    UniqueArray<Role>;      // optional parent role
 
-    constructor(theId: number,
-                theRealm: Realm,
+    constructor(theRealm: Realm,
                 theRoleName: string) {
         //
         assert(theRealm, 'realm is required');
         assert(theRoleName, 'role-name is required');
 
-        this.id         = theId;
         this.realm      = theRealm;
         this.roleName   = theRoleName;
-        this.claims     = new Set();
-        this.parents    = new Set();
+        this.claims     = new UniqueArray();
+        this.parents    = new UniqueArray();
+    }
+
+    uniqueKey(): string {
+        return `${this.realm.realmName}_${this.roleName}`;
     }
 
     /**

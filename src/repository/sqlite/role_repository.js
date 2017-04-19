@@ -106,10 +106,19 @@ export class RoleRepositorySqlite implements RoleRepository {
         assert(role, 'role not specified');
         assert(role.realm && role.realm.id, 'realm not specified');
         //
-        if (role.id) {
-            throw new PersistenceError(`Role is immutable and cannot be updated ${String(role)}`);
-        } else {
-            return new Promise((resolve, reject) => {
+        let savePromise = new Promise((resolve, reject) => {
+            if (role.id) {
+                let stmt = this.dbHelper.db.prepare('UPDATE roles SET role_name = ? WHERE rowid = ?');
+                stmt.run(role.roleName, role.realm.id);
+                stmt.finalize(err => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not save role ${String(role)} due to ${err}`));
+                    } else {
+                        resolve(role);
+                    }
+                });
+
+            } else {
                 let stmt = this.dbHelper.db.prepare('INSERT INTO roles VALUES (?, ?)');
                 stmt.run(role.realm.id, role.roleName, function(err) {
                     role.id = this.lastID;
@@ -121,14 +130,18 @@ export class RoleRepositorySqlite implements RoleRepository {
                         resolve(role);
                     }
                 });
-            });
-        }
+            }
+        });
+        //
+        await savePromise;
+        await this.claimRepository.__saveRoleClaims(role);
+        return savePromise;
     }
 
    /**
      * This method adds set of roles as parent
      */
-    async addParentsToRole(role: Role, parents: Set<Role>): Promise<Role> {
+    async addParentsToRole(role: Role, parents: Array<Role>): Promise<Role> {
         assert(role, 'role not specified');
         assert(parents, 'role parents not specified');
 
@@ -157,12 +170,14 @@ export class RoleRepositorySqlite implements RoleRepository {
     /**
      * This method remove set of roles as parent
      */
-    async removeParentsFromRole(role: Role, parents: Set<Role>): Promise<Role> {
+    async removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role> {
         assert(role, 'role not specified');
         assert(parents, 'role parents not specified');
         //
         this.cache.remove('role', `id_${role.id}`);
-        parents.forEach(parent => role.parents.delete(parent));
+        parents.forEach(parent => {
+            role.parents.delete(parent);
+        });
         //
         let parentIds = '';
         parents.forEach(parent => {
@@ -185,18 +200,30 @@ export class RoleRepositorySqlite implements RoleRepository {
     }
 
     /**
-     * This method adds role to principal
+     * This method save role for principal
      * @param {*} principal
      * @param {*} roles
      */
-    async addRolesToPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal> {
-        assert(principal, 'principal not specified');
-        assert(roles, 'roles not specified');
+    async __savePrincipalRoles(principal: Principal): Promise<Principal> {
+        assert(principal && principal.id, 'principal not specified');
         //
-        let promises = [];
-        roles.forEach(role => {
+        let deletePromise = new Promise((resolve, reject) => {
+            this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?',
+            principal.id, (err) => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not remove Role from principal ${String(principal)} due to ${err}`));
+                    } else {
+                        resolve();
+                    }
+                });
+          });
+        await deletePromise;
+
+        //
+        let savePromises = [];
+        principal.roles.forEach(role => {
             this.cache.remove('role', `id_${role.id}`);
-            promises.push(new Promise((resolve, reject) => {
+            savePromises.push(new Promise((resolve, reject) => {
               this.dbHelper.db.run('INSERT INTO principals_roles VALUES (?, ?)',
                   principal.id, role.id, (err) => {
                       if (err) {
@@ -208,36 +235,10 @@ export class RoleRepositorySqlite implements RoleRepository {
                   });
             }));
         });
-        await Promise.all(promises);
+        await Promise.all(savePromises);
         return principal;
     }
 
-    /**
-     * This method removes role from principal
-     * @param {*} principal
-     * @param {*} role
-     */
-    async removeRolesFromPrincipal(principal: Principal, roles: Set<Role>): Promise<Principal> {
-        assert(principal, 'principal not specified');
-        assert(roles, 'roles not specified');
-        //
-        let promises = [];
-        roles.forEach(role => {
-            this.cache.remove('role', `id_${role.id}`);
-            promises.push(new Promise((resolve, reject) => {
-              this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ? and role_id = ?', principal.id, role.id, (err) => {
-                      if (err) {
-                          reject(new PersistenceError(`Could not remove Role ${String(role)} from principal ${String(principal)} due to ${err}`));
-                      } else {
-                          principal.roles.delete(role);
-                          resolve(role);
-                      }
-                  });
-            }));
-        });
-        await Promise.all(promises);
-        return principal;
-    }
 
     /**
      * This method removes object by id
@@ -275,16 +276,16 @@ export class RoleRepositorySqlite implements RoleRepository {
     /**
      * This method loads roles for given principal
      */
-    async loadPrincipalRoles(principal: Principal): Promise<Principal> {
-        assert(principal, 'principal not specified');
+    async __loadPrincipalRoles(principal: Principal): Promise<Principal> {
+        assert(principal && principal.id, 'principal not specified');
         //
-        principal.roles.clear();
+        principal.roles.length = 0;
         let criteria: Map<string, any> = new Map();
         criteria.set('principal_id', principal.id);
         let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
         let claimPromises = [];
 
-        claimPromises.push(q.query(
+        await q.query(
                     'SELECT principal_id, role_id, roles.rowid AS id, role_name, realm_id ' +
                     'FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id',
                     criteria, (row) => {
@@ -293,9 +294,9 @@ export class RoleRepositorySqlite implements RoleRepository {
                         principal.roles.add(role);
     				    return role;
                     });
-        }));
+        });
         principal.roles.forEach(role => {
-            claimPromises.push(this.claimRepository.loadRoleClaims(role));
+            claimPromises.push(this.claimRepository.__loadRoleClaims(role));
         });
         await Promise.all(claimPromises);
         return principal;
@@ -324,9 +325,10 @@ export class RoleRepositorySqlite implements RoleRepository {
     async __rowToRole(row: any): Promise<Role> {
         //
         let realm               = await this.realmRepository.findById(row.realm_id);
-        let role                = new RoleImpl(row.id, realm, row.role_name);
+        let role                = new RoleImpl(realm, row.role_name);
+        role.id                 = row.id;
         let promiseLoadParents  = await this._loadParentRoles(role);
-        let promiseLoadClaims   = await this.claimRepository.loadRoleClaims(role);
+        let promiseLoadClaims   = await this.claimRepository.__loadRoleClaims(role);
         this.cache.set('role', `id_${role.id}`, role);
         return role;
     }

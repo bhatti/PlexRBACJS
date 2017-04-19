@@ -64,8 +64,8 @@ describe('PrincipalRepository', function() {
 
   describe('#saveGetById', function() {
     it('should be able to get principal by id after saving', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
-        let saved  = await this.principalRepository.save(new PrincipalImpl(null, realm, 'superuser'));
+        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+        let saved  = await this.principalRepository.save(new PrincipalImpl(realm, 'superuser'));
         let loaded = await this.principalRepository.findById(saved.id);
         assert.equal('superuser', loaded.principalName);
     });
@@ -74,9 +74,10 @@ describe('PrincipalRepository', function() {
 
   describe('#saveAndRemoveGetById', function() {
     it('should be able to save and remove principal by id', async function() {
-        let realm   = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
-        let saved   = await this.principalRepository.save(new PrincipalImpl(null, realm, 'username'));
+        let realm   = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+        let saved   = await this.principalRepository.save(new PrincipalImpl(realm, 'username'));
         let removed = await this.principalRepository.removeById(saved.id);
+
         assert.equal(true, removed);
 
         try {
@@ -91,8 +92,8 @@ describe('PrincipalRepository', function() {
 
   describe('#saveGetByName', function() {
     it('should be able to get principal by name after saving', async function() {
-        let realm     = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
-        let saved     = await this.principalRepository.save(new PrincipalImpl(null, realm, 'xuser'));
+        let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+        let saved     = await this.principalRepository.save(new PrincipalImpl(realm, 'xuser'));
         let loaded    = await this.principalRepository.findByName(realm.realmName, saved.principalName);
         assert.equal('xuser', loaded.principalName);
     });
@@ -113,8 +114,8 @@ describe('PrincipalRepository', function() {
 
   describe('#search', function() {
     it('should be able to search principal by name', async function() {
-        let realm       = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
-        let saved       = await this.principalRepository.save(new PrincipalImpl(null, realm, 'searchuser'));
+        let realm       = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+        let saved       = await this.principalRepository.save(new PrincipalImpl(realm, 'searchuser'));
         let criteria    = new Map();
         criteria.set('principal_name', 'searchuser');
         let results = await this.principalRepository.search(criteria);

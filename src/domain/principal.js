@@ -1,10 +1,13 @@
 /*@flow*/
 
 import type {Principal, Claim, Role, Realm}     from './interface';
+import {UniqueArray}                            from '../util/unique_array';
+import type {UniqueIdentifier}                  from '../util/unique_id';
+
 const assert = require('assert');
 
 
-export class PrincipalImpl implements Principal {
+export class PrincipalImpl implements Principal, UniqueIdentifier {
     /**
      * unique database id
      */
@@ -23,44 +26,46 @@ export class PrincipalImpl implements Principal {
     /**
      * set of Claims
      */
-    claims:         Set<Claim>;
+    claims:         UniqueArray<Claim>;
 
     /**
      * set of roles
      */
-    roles:          Set<Role>;
+    roles:          UniqueArray<Role>;
 
-    constructor(theId: number,
-                theRealm: Realm,
+    constructor(theRealm: Realm,
                 thePrincipalName: string) {
         //
         assert(theRealm, 'realm is required');
         assert(thePrincipalName, 'principal is required');
         //
-        this.id = theId;
-        this.realm = theRealm;
-        this.principalName = thePrincipalName;
-        this.claims = new Set();
-        this.roles = new Set();
+        this.realm          = theRealm;
+        this.principalName  = thePrincipalName;
+        this.claims         = new UniqueArray();
+        this.roles          = new UniqueArray();
     }
 
-    allClaims(): Set<Claim> {
-        let allClaims: Set<Claim> = new Set();
+    uniqueKey(): string {
+        return `${this.realm.realmName}_${this.principalName}`;
+    }
+
+    allClaims(): UniqueArray<Claim> {
+        let allClaims: UniqueArray<Claim> = new UniqueArray();
         this.claims.forEach(claim => {
             allClaims.add(claim);
         });
         this.roles.forEach(role => {
-            this._loadRoleClaims(role, allClaims);
+            this.___loadRoleClaims(role, allClaims);
         });
         return allClaims;
     }
 
-    _loadRoleClaims(role: Role, allClaims: Set<Claim>):void {
+    ___loadRoleClaims(role: Role, allClaims: UniqueArray<Claim>):void {
         role.claims.forEach(claim => {
             allClaims.add(claim);
         });
         role.parents.forEach(parentRole => {
-            this._loadRoleClaims(parentRole, allClaims);
+            this.___loadRoleClaims(parentRole, allClaims);
         });
     }
 

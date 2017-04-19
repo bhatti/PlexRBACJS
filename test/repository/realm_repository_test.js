@@ -51,8 +51,8 @@ describe('RealmRepository', function() {
     describe('#save', function() {
       it('should not be able to save same realm', async function() {
           try {
-              let realm  = await this.realmRepository.save(new RealmImpl(null, 'same_domain'));
-              await this.realmRepository.save(new RealmImpl(null, 'same_domain'));
+              let realm  = await this.realmRepository.save(new RealmImpl('same_domain'));
+              await this.realmRepository.save(new RealmImpl('same_domain'));
               assert(false, 'should not save realm');
           } catch(err) {
           }
@@ -61,7 +61,7 @@ describe('RealmRepository', function() {
 
     describe('#saveGetById', function() {
       it('should be able to get realm by id after saving', async function() {
-          let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+          let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
           let loaded = await this.realmRepository.findById(realm.id);
           assert.equal(realm.realmName, loaded.realmName);
       });
@@ -69,7 +69,7 @@ describe('RealmRepository', function() {
 
     describe('#findByName', function() {
       it('should be able to find realm by name after saving', async function() {
-          let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+          let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
           let loaded = await this.realmRepository.findByName(realm.realmName);
           assert.equal(realm.realmName, loaded.realmName);
       });
@@ -89,7 +89,7 @@ describe('RealmRepository', function() {
 
     describe('#search', function() {
       it('should be able to search domain by name', async function() {
-          let realm  = await this.realmRepository.save(new RealmImpl(null, `random-domain_${Math.random()}`));
+          let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
 
           let criteria    = new Map();
           criteria.set('realm_name', realm.realmName);

@@ -10,9 +10,9 @@ export class AuthorizationError extends Error {
     resource:       string;
     context:        Map<string, any>;
 
-    constructor(message:            string, 
+    constructor(message:            string,
                 thePrincipalName?:  string = '',
-                theAction?:         string = '', 
+                theAction?:         string = '',
                 theResource?:       string = '',
                 theContext:         Map<string, any> = new Map()) {
         //

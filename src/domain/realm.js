@@ -1,22 +1,26 @@
 /*@flow*/
 
-import type {Realm}     from './interface';
+import type {Realm}             from './interface';
+import type {UniqueIdentifier}  from '../util/unique_id';
+
 const assert = require('assert');
 
 
 /**
  * RealmImpl implements Realm for defining domain of the application
  */
-export class RealmImpl implements Realm {
+export class RealmImpl implements Realm, UniqueIdentifier {
     id:         number;         // unique database id
     realmName:  string;         // realm-name
 
-    constructor(theId: number, 
-                theRealmName: string) {
+    constructor(theRealmName: string) {
         //
         assert(theRealmName, 'realm is required');
-        this.id = theId;
         this.realmName = theRealmName;
+    }
+
+    uniqueKey(): string {
+        return `${this.realmName}`;
     }
 
     /**
@@ -24,5 +28,5 @@ export class RealmImpl implements Realm {
      */
     toString() {
         return `(${this.realmName})`;
-    }        
+    }
 }

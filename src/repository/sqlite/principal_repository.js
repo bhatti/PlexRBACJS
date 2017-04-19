@@ -102,10 +102,19 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
         assert(principal, 'principal not specified');
         assert(principal.realm && principal.realm.id, 'realm-id not specified');
 
-        if (principal.id) {
-            throw new PersistenceError(`Principal is immutable and cannot be updated ${String(principal)}`);
-        } else {
-            return new Promise((resolve, reject) => {
+        let savePrincipal = new Promise((resolve, reject) => {
+            if (principal.id) {
+                let stmt = this.dbHelper.db.prepare('UPDATE principals SET principal_name = ? WHERE rowid = ?');
+                stmt.run(principal.principalName, principal.realm.id);
+                stmt.finalize(err => {
+                    if (err) {
+                        reject(new PersistenceError(`Could not save principal ${String(principal)} due to ${err}`));
+                    } else {
+                        resolve(principal);
+                    }
+                });
+
+            } else {
                 let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
                 stmt.run(principal.realm.id, principal.principalName, function(err) {
                     principal.id = this.lastID;
@@ -113,8 +122,15 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                 stmt.finalize(() => {
                     resolve(principal);
                 });
-            });
-        }
+            }
+        });
+
+        await savePrincipal;
+        //
+        await this.roleRepository.__savePrincipalRoles(principal);
+        await this.claimRepository.__savePrincipalClaims(principal);
+        return savePrincipal;
+
     }
 
     /**
@@ -135,7 +151,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 				                  }
 			                });
 	              });
-        return await removePromise;
+        return removePromise;
     }
 
     /**
@@ -150,9 +166,10 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 
     async __rowToPrincipal(row: any): Promise<Principal> {
         let realm       = await this.realmRepository.findById(row.realm_id);
-        let principal   = new PrincipalImpl(row.id, realm, row.principal_name);
-        await this.claimRepository.loadPrincipalClaims(principal);
-        await this.roleRepository.loadPrincipalRoles(principal);
+        let principal   = new PrincipalImpl(realm, row.principal_name);
+        principal.id = row.id;
+        await this.claimRepository.__loadPrincipalClaims(principal);
+        await this.roleRepository.__loadPrincipalRoles(principal);
         return principal;
     }
 }

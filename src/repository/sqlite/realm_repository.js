@@ -50,6 +50,8 @@ export class RealmRepositorySqlite implements RealmRepository {
                         then(realm => {
                         this.cache.set('realm', `id_${id}`, realm);
                         resolve(realm);
+                    }).catch(err => {
+                        reject(err);
                     });
                 } else {
                     reject(new PersistenceError(`Could not find realm with id ${id}`));
@@ -79,6 +81,8 @@ export class RealmRepositorySqlite implements RealmRepository {
                         then(realm => {
                         this.cache.set('realm', realmName, realm);
                         resolve(realm);
+                    }).catch(err => {
+                        reject(err);
                     });
                 } else {
                     reject(new PersistenceError(`Could not find realm with name ${realmName}`));
@@ -135,7 +139,9 @@ export class RealmRepositorySqlite implements RealmRepository {
     }
 
     async __rowToRealm(row: any): Promise<Realm> {
-        return new RealmImpl(row.id, row.realm_name);
+        let realm = new RealmImpl(row.realm_name);
+        realm.id = row.id;
+        return realm;
     }
 
 }

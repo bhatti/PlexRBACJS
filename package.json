@@ -9,7 +9,9 @@
     "build": "webpack",
     "mocha": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill --recursive",
     "x": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/repository/claim_repository_test.js",
+    "y": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/repository/role_repository_test.js",
     "test": "nyc --reporter=html --reporter=text mocha --timeout=4000 --recursive --compilers js:babel-register --require babel-polyfill",
+    "start": "babel-node app.js --presets es2015,stage-2",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "dependencies": {
@@ -35,6 +37,7 @@
     "babel-preset-stage-3": "^6.24.1",
     "babel-register": "^6.24.1",
     "babel-runtime": "^6.23.0",
+    "babel-cli": "^6.24.1",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
     "coveralls": "^2.13.0",
