@@ -1,13 +1,13 @@
 /*@flow*/
 const assert = require('assert');
 
-import type {Principal}             from '../../domain/interface';
+import type {IPrincipal}            from '../../domain/interface';
 import type {PrincipalRepository}   from '../interface';
 import type {RoleRepository}        from '../interface';
 import type {RealmRepository}       from '../interface';
 import type {ClaimRepository}       from '../interface';
 import {QueryOptions}               from '../interface';
-import {PrincipalImpl}              from '../../domain/principal';
+import {Principal}                  from '../../domain/principal';
 import {PersistenceError}           from '../persistence_error';
 import {DBHelper}                   from './db_helper';
 import {QueryHelper}                from './query_helper';
@@ -47,7 +47,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * This method finds principal by id
      * @param {*} id - database id
      */
-    async findById(id: number): Promise<Principal> {
+    async findById(id: number): Promise<IPrincipal> {
         assert(id, 'principal-id not specified');
 
         return new Promise((resolve, reject) => {
@@ -71,7 +71,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * @param {*} realmName
      * @param {*} principalName
      */
-    async findByName(realmName: string, principalName: string): Promise<Principal> {
+    async findByName(realmName: string, principalName: string): Promise<IPrincipal> {
         assert(realmName, 'realm-name not specified');
         assert(principalName, 'principal-name not specified');
 
@@ -98,7 +98,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * This method saves object and returns updated object
      * @param {*} principal - to save
      */
-    async save(principal: Principal): Promise<Principal> {
+    async save(principal: IPrincipal): Promise<IPrincipal> {
         assert(principal, 'principal not specified');
         assert(principal.realm && principal.realm.id, 'realm-id not specified');
 
@@ -157,16 +157,16 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
     /**
      * This method queries database and returns list of objects
      */
-    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Principal>> {
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IPrincipal>> {
         let q:QueryHelper<Principal> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
              return this.__rowToPrincipal(row);
          }, options);
     }
 
-    async __rowToPrincipal(row: any): Promise<Principal> {
+    async __rowToPrincipal(row: any): Promise<IPrincipal> {
         let realm       = await this.realmRepository.findById(row.realm_id);
-        let principal   = new PrincipalImpl(realm, row.principal_name);
+        let principal   = new Principal(realm, row.principal_name);
         principal.id = row.id;
         await this.claimRepository.__loadPrincipalClaims(principal);
         await this.roleRepository.__loadPrincipalRoles(principal);

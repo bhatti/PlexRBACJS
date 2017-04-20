@@ -1,19 +1,19 @@
 /* @flow */
-import type {SecurityManager}       from './interface';
-import type {ConditionEvaluator}    from '../expr/interface';
+import type {ISecurityManager}      from './interface';
+import type {IConditionEvaluator}   from '../expr/interface';
 import {SecurityAccessRequest}      from '../domain/security_access_request';
 import {AuthorizationError}         from '../domain/auth_error';
-import type {SecurityService}       from '../service/interface';
+import type {ISecurityService}      from '../service/interface';
 
 /**
- * SecurityManagerImpl implements SecurityManager and checks if
+ * SecurityManager implements ISecurityManager and checks if
  * principal or role has proper access to claims
  */
-class SecurityManagerImpl implements SecurityManager {
-    conditionEvaluator: ConditionEvaluator;
-    securityService: SecurityService;
+class SecurityManager implements ISecurityManager {
+    conditionEvaluator: IConditionEvaluator;
+    securityService:    ISecurityService;
 
-    constructor(theConditionEvaluator: ConditionEvaluator, theSecurityService: SecurityService) {
+    constructor(theConditionEvaluator: IConditionEvaluator, theSecurityService: ISecurityService) {
         this.conditionEvaluator = theConditionEvaluator;
         this.securityService = theSecurityService;
     }

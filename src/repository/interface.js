@@ -1,10 +1,10 @@
 
 /* @flow Interface file */
 
-import type {Principal}     from '../domain/interface';
-import type {Claim}         from '../domain/interface';
-import type {Realm}         from '../domain/interface';
-import type {Role}          from '../domain/interface';
+import type {IPrincipal}    from '../domain/interface';
+import type {IClaim}        from '../domain/interface';
+import type {IRealm}        from '../domain/interface';
+import type {IRole}         from '../domain/interface';
 import {PersistenceError}   from './persistence_error';
 
 /**
@@ -50,24 +50,24 @@ export interface Repository<T> {
 /**
  * RealmRepository defines data access methods for realm objects
  */
-export interface RealmRepository extends Repository<Realm> {
+export interface RealmRepository extends Repository<IRealm> {
     /**
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Realm>;
+    findById(id: number): Promise<IRealm>;
 
     /**
      * This method finds realm by name
      * @param {*} realmName
      */
-    findByName(realmName: string): Promise<Realm>;
+    findByName(realmName: string): Promise<IRealm>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} realm - to save
      */
-    save(realm: Realm): Promise<Realm>;
+    save(realm: IRealm): Promise<IRealm>;
 
     /**
      * This method removes object by id
@@ -78,31 +78,31 @@ export interface RealmRepository extends Repository<Realm> {
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>>;
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IRealm>>;
 }
 
 /**
  * RoleRepository defines data access methods for role objects
  */
-export interface RoleRepository extends Repository<Role> {
+export interface RoleRepository extends Repository<IRole> {
     /**
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Role>;
+    findById(id: number): Promise<IRole>;
 
     /**
      * This method finds role by name
      * @param {*} realmName
      * @param {*} roleName
      */
-    findByName(realmName: string, roleName: string): Promise<Role>;
+    findByName(realmName: string, roleName: string): Promise<IRole>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} role - to save
      */
-    save(role: Role): Promise<Role>;
+    save(role: IRole): Promise<IRole>;
 
     /**
      * This method removes object by id
@@ -113,46 +113,46 @@ export interface RoleRepository extends Repository<Role> {
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Role>>;
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IRole>>;
 
     /**
      * This method save role to principal
      * @param {*} principal
      * @param {*} roles
      */
-    __savePrincipalRoles(principal: Principal): Promise<Principal>;
+    __savePrincipalRoles(principal: IPrincipal): Promise<IPrincipal>;
 
     /**
      * This method loads roles for principal
      */
-    __loadPrincipalRoles(principal: Principal): Promise<Principal>;
+    __loadPrincipalRoles(principal: IPrincipal): Promise<IPrincipal>;
 
    /**
      * This method adds set of roles as parent
      */
-    addParentsToRole(role: Role, parents: Array<Role>): Promise<Role>;
+    addParentsToRole(role: IRole, parents: Array<IRole>): Promise<IRole>;
 
     /**
      * This method remove set of roles as parent
      */
-    removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role>;
+    removeParentsFromRole(role: IRole, parents: Array<IRole>): Promise<IRole>;
 }
 
 /**
  * ClaimRepository defines data access methods for Claim objects
  */
-export interface ClaimRepository extends Repository<Claim> {
+export interface ClaimRepository extends Repository<IClaim> {
     /**
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Claim>;
+    findById(id: number): Promise<IClaim>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} Claim - to save
      */
-    save(claim: Claim): Promise<Claim>;
+    save(claim: IClaim): Promise<IClaim>;
 
     /**
      * This method removes object by id
@@ -163,51 +163,51 @@ export interface ClaimRepository extends Repository<Claim> {
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>>;
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IClaim>>;
 
     /**
      * This method save claims for principal
      */
-    __savePrincipalClaims(principal: Principal): Promise<Principal>;
+    __savePrincipalClaims(principal: IPrincipal): Promise<IPrincipal>;
 
     /**
      * This method save claims for role
      */
-    __saveRoleClaims(role: Role): Promise<Role>;
+    __saveRoleClaims(role: IRole): Promise<IRole>;
 
     /**
      * This method loads claims for given principal using claims associated with role and principal
      */
-    __loadPrincipalClaims(principal: Principal): Promise<Principal>;
+    __loadPrincipalClaims(principal: IPrincipal): Promise<IPrincipal>;
 
     /**
      * This method load claims for role
      */
-    __loadRoleClaims(role: Role): Promise<Role>;
+    __loadRoleClaims(role: IRole): Promise<IRole>;
 }
 
 /**
  * PrincipalRepository defines data access methods for principal objects
  */
-export interface PrincipalRepository extends Repository<Principal> {
+export interface PrincipalRepository extends Repository<IPrincipal> {
     /**
      * This method finds object by id
      * @param {*} id - database id
      */
-    findById(id: number): Promise<Principal>;
+    findById(id: number): Promise<IPrincipal>;
 
     /**
      * This method finds principal by name
      * @param {*} realmName
      * @param {*} principalName
      */
-    findByName(realmName: string, principalName: string): Promise<Principal>;
+    findByName(realmName: string, principalName: string): Promise<IPrincipal>;
 
     /**
      * This method saves object and returns updated object
      * @param {*} principal - to save
      */
-    save(principal: Principal): Promise<Principal>;
+    save(principal: IPrincipal): Promise<IPrincipal>;
 
     /**
      * This method removes object by id
@@ -218,5 +218,5 @@ export interface PrincipalRepository extends Repository<Principal> {
     /**
      * This method queries database and returns list of objects
      */
-    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Principal>>;
+    search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IPrincipal>>;
 }

@@ -2,13 +2,13 @@
 
 const assert = require('assert');
 
-import type {Claim}             from '../../domain/interface';
-import type {Principal}         from '../../domain/interface';
-import type {Role}              from '../../domain/interface';
+import type {IClaim}            from '../../domain/interface';
+import type {IPrincipal}        from '../../domain/interface';
+import type {IRole}             from '../../domain/interface';
 import type {ClaimRepository}   from '../interface';
 import type {RealmRepository}   from '../interface';
 import {QueryOptions}           from '../interface';
-import {ClaimImpl}              from '../../domain/claim';
+import {Claim}                  from '../../domain/claim';
 import {PersistenceError}       from '../persistence_error';
 import {DBHelper}               from './db_helper';
 import {QueryHelper}            from './query_helper';
@@ -35,7 +35,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
      * This method finds object by id
      * @param {*} id - database id
      */
-    async findById(id: number): Promise<Claim> {
+    async findById(id: number): Promise<IClaim> {
         assert(id, 'claim-id not specified');
         let findPromise = new Promise((resolve, reject) => {
             this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
@@ -56,7 +56,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         return await findPromise;
     }
 
-    async findByValue(claim: Claim): Promise<Claim> {
+    async findByValue(claim: IClaim): Promise<IClaim> {
         assert(claim, 'claim-id not specified');
         assert(claim.realm && claim.realm.id, 'realm-id not specified');
         return new Promise((resolve, reject) => {
@@ -78,7 +78,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
      * This method saves object and returns updated object
      * @param {*} Claim - to save
      */
-    async save(claim: Claim): Promise<Claim> {
+    async save(claim: IClaim): Promise<IClaim> {
         assert(claim, 'claim-id not specified');
         assert(claim.realm && claim.realm.id, 'realm-id not specified');
         //
@@ -89,7 +89,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
         }
     }
 
-    async __save(claim: Claim): Promise<Claim> {
+    async __save(claim: IClaim): Promise<IClaim> {
         return new Promise((resolve, reject) => {
             if (claim.id) {
                 let stmt = this.dbHelper.db.prepare('UPDATE claims SET action = ?, resource = ?, condition = ? WHERE rowid = ? AND realm_id = ?');
@@ -143,7 +143,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method queries database and returns list of objects
      */
-    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Claim>> {
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IClaim>> {
         let q:QueryHelper<Claim> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
             return this.__rowToClaim(row);
@@ -153,7 +153,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method save claims for principal
      */
-    async __savePrincipalClaims(principal: Principal): Promise<Principal> {
+    async __savePrincipalClaims(principal: IPrincipal): Promise<IPrincipal> {
         assert(principal && principal.id, 'principal not specified');
 
         let deletePromise = new Promise((resolve, reject) => {
@@ -198,7 +198,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method save claims for role
      */
-    async __saveRoleClaims(role: Role): Promise<Role> {
+    async __saveRoleClaims(role: IRole): Promise<IRole> {
         assert(role && role.id, 'role not specified');
 
         let deletePromise = new Promise((resolve, reject) => {
@@ -242,7 +242,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method returns claims by principal that are associated to principal roles or directly to principal
      */
-    async __loadPrincipalClaims(principal: Principal): Promise<Principal>  {
+    async __loadPrincipalClaims(principal: IPrincipal): Promise<IPrincipal>  {
         assert(principal && principal.id, 'principal not specified');
 
         let criteria: Map<string, any> = new Map();
@@ -263,7 +263,7 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     /**
      * This method load claims for role
      */
-    async __loadRoleClaims(role: Role): Promise<Role> {
+    async __loadRoleClaims(role: IRole): Promise<IRole> {
         assert(role, 'role not specified');
 
         let criteria: Map<string, any> = new Map();
@@ -282,10 +282,10 @@ export class ClaimRepositorySqlite implements ClaimRepository {
     }
 
 
-    async __rowToClaim(row: any): Promise<Claim> {
+    async __rowToClaim(row: any): Promise<IClaim> {
         let promise     = this.realmRepository.findById(row.realm_id);
         let realm       = await promise;
-        let claim = new ClaimImpl(realm, row.action, row.resource, row.condition);
+        let claim = new Claim(realm, row.action, row.resource, row.condition);
         claim.id = row.id;
         return claim;
     }

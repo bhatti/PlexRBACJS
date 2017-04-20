@@ -9,9 +9,9 @@ const _      = require('lodash'),
       errors = require('restify-errors');
 
 
-import {RealmImpl}                  from '../src/domain/realm';
-import {RoleImpl}                   from '../src/domain/role';
-import type {RealmRepository}       from '../src/repository/interface';
+import {Realm}                  from '../src/domain/realm';
+import {Role}                   from '../src/domain/role';
+import type {RealmRepository}   from '../src/repository/interface';
 
 
 /**
@@ -30,9 +30,9 @@ server.post('/realms/:realmId/roles', function(req, res, next) {
     }
 
     try {
-        let realm = new RealmImpl('');
+        let realm = new Realm('');
         realm.id  = Number.parseInt(req.params.realmId);
-        let role  = new RoleImpl(realm, json.realmName);
+        let role  = new Role(realm, json.realmName);
         json.claims.forEach(claim => role.claims.add(claim));
         //
         let saved = await server.roleRepository.save(role);
@@ -96,9 +96,9 @@ server.put('/realms/:realmId/roles/:roleId', function(req, res, next) {
     }
 
     try {
-        let realm = new RealmImpl('');
+        let realm = new Realm('');
         realm.id  = Number.parseInt(req.params.realmId);
-        let role  = new RoleImpl(realm, json.realmName);
+        let role  = new Role(realm, json.realmName);
         role.id   = json.id;
         json.claims.forEach(claim => role.claims.add(claim));
         //

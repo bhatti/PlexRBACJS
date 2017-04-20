@@ -6,7 +6,7 @@ import {UniqueArray}        from '../util/unique_array';
  * Realm represents domain of application, each application will have a unique
  * realm.
  */
-export interface Realm {
+export interface IRealm {
     id:         number;  // unique database id
 
     realmName:  string;  // realm-name
@@ -16,23 +16,23 @@ export interface Realm {
  * A role represents job title or function. The role is inheritable so that you can define common
  * and specialized roles
  */
-export interface Role {
+export interface IRole {
     id:         number;         // unique database id
 
-    realm:      Realm;          // realm for the application
+    realm:      IRealm;         // realm for the application
 
     roleName:   string;         // role-name
 
-    parents:    UniqueArray<Role>;      // set of claims
+    parents:    UniqueArray<IRole>;      // set of claims
 
-    claims:     UniqueArray<Claim>;     // set of claims
+    claims:     UniqueArray<IClaim>;     // set of claims
 }
 
 /**
  * A principal represents users or groups who are defined in an application.
  * A principal can have many claims (or permissions) or many roles (role-based)
  */
-export interface Principal {
+export interface IPrincipal {
     /**
      * Unique database id
      */
@@ -41,7 +41,7 @@ export interface Principal {
     /**
      * realm for the application
      */
-    realm:          Realm;
+    realm:          IRealm;
 
     /**
      * principal name such as username
@@ -51,14 +51,14 @@ export interface Principal {
     /**
      * set of claims
      */
-    claims:         UniqueArray<Claim>;
+    claims:         UniqueArray<IClaim>;
 
     /**
      * set of roles
      */
-    roles:          UniqueArray<Role>;
+    roles:          UniqueArray<IRole>;
 
-    allClaims():    UniqueArray<Claim>;
+    allClaims():    UniqueArray<IClaim>;
 }
 
 /**
@@ -66,7 +66,7 @@ export interface Principal {
  * and resource defines target object that will be acted upon. The condition defines dynamic data
  * when this claim will be granted.
  */
-export interface Claim {
+export interface IClaim {
     /**
      * Unique database id
      */
@@ -75,7 +75,7 @@ export interface Claim {
     /**
      * realm for the application
      */
-    realm:      Realm;
+    realm:      IRealm;
 
     /**
      * This can be a single operation or regex based multiple operations

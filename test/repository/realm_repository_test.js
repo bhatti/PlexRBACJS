@@ -4,11 +4,11 @@ var expect = chai.expect;
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
-import type {Realm}                 from '../../src/domain/interface';
+import type {IRealm}                from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
 import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
 import {QueryOptions}               from '../../src/repository/interface';
-import {RealmImpl}                  from '../../src/domain/realm';
+import {Realm}                      from '../../src/domain/realm';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
@@ -51,8 +51,8 @@ describe('RealmRepository', function() {
     describe('#save', function() {
       it('should not be able to save same realm', async function() {
           try {
-              let realm  = await this.realmRepository.save(new RealmImpl('same_domain'));
-              await this.realmRepository.save(new RealmImpl('same_domain'));
+              let realm  = await this.realmRepository.save(new Realm('same_domain'));
+              await this.realmRepository.save(new Realm('same_domain'));
               assert(false, 'should not save realm');
           } catch(err) {
           }
@@ -61,7 +61,7 @@ describe('RealmRepository', function() {
 
     describe('#saveGetById', function() {
       it('should be able to get realm by id after saving', async function() {
-          let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+          let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
           let loaded = await this.realmRepository.findById(realm.id);
           assert.equal(realm.realmName, loaded.realmName);
       });
@@ -69,7 +69,7 @@ describe('RealmRepository', function() {
 
     describe('#findByName', function() {
       it('should be able to find realm by name after saving', async function() {
-          let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+          let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
           let loaded = await this.realmRepository.findByName(realm.realmName);
           assert.equal(realm.realmName, loaded.realmName);
       });
@@ -89,7 +89,7 @@ describe('RealmRepository', function() {
 
     describe('#search', function() {
       it('should be able to search domain by name', async function() {
-          let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+          let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
 
           let criteria    = new Map();
           criteria.set('realm_name', realm.realmName);

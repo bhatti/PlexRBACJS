@@ -1,15 +1,15 @@
 /*@flow*/
 
-import type {Realm}             from './interface';
+import type {IRealm}            from './interface';
 import type {UniqueIdentifier}  from '../util/unique_id';
 
 const assert = require('assert');
 
 
 /**
- * RealmImpl implements Realm for defining domain of the application
+ * Realm implements IRealm for defining domain of the application
  */
-export class RealmImpl implements Realm, UniqueIdentifier {
+export class Realm implements IRealm, UniqueIdentifier {
     id:         number;         // unique database id
     realmName:  string;         // realm-name
 

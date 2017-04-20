@@ -1,6 +1,6 @@
 /*@flow*/
 
-import type {ConditionEvaluator}    from './interface';
+import type {IConditionEvaluator}   from './interface';
 import Parser                       from 'morph-expressions';
 
 /**
@@ -9,7 +9,7 @@ import Parser                       from 'morph-expressions';
  */
 // https://github.com/TechnologyAdvice/Jexl
 // https://github.com/abukurov/morph-expressions
-export class ConditionEvaluatorImpl implements ConditionEvaluator {
+export class ConditionEvaluator implements IConditionEvaluator {
     parser: Parser;
 
     constructor() {

@@ -2,10 +2,10 @@
 const sqlite3   = require('sqlite3').verbose();
 const assert    = require('assert');
 
-import type {Realm}             from '../../domain/interface';
+import type {IRealm}            from '../../domain/interface';
 import type {RealmRepository}   from '../interface';
 import {QueryOptions}           from '../interface';
-import {RealmImpl}              from '../../domain/realm';
+import {Realm}                  from '../../domain/realm';
 import {PersistenceError}       from '../persistence_error';
 import {DBHelper}               from './db_helper';
 import {QueryHelper}            from './query_helper';
@@ -32,7 +32,7 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method finds object by id
      * @param {*} id - database id
      */
-    async findById(id: number): Promise<Realm> {
+    async findById(id: number): Promise<IRealm> {
         assert(id, 'realm-id not specified');
 
         let cached = this.cache.get('realm', `id_${id}`);
@@ -64,7 +64,7 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method finds realm by name
      * @param {*} realmName
      */
-    async findByName(realmName: string): Promise<Realm> {
+    async findByName(realmName: string): Promise<IRealm> {
         assert(realmName, 'realm-name not specified');
 
         let cached = this.cache.get('realm', realmName);
@@ -95,7 +95,7 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method saves object and returns updated object
      * @param {*} realm - to save
      */
-    async save(realm: Realm): Promise<Realm> {
+    async save(realm: IRealm): Promise<IRealm> {
         assert(realm, 'realm not specified');
 
         if (realm.id) {
@@ -131,15 +131,15 @@ export class RealmRepositorySqlite implements RealmRepository {
     /**
      * This method queries database and returns list of objects
      a*/
-    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Realm>> {
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IRealm>> {
         let q:QueryHelper<Realm> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, row => {
              return this.__rowToRealm(row);
          }, options);
     }
 
-    async __rowToRealm(row: any): Promise<Realm> {
-        let realm = new RealmImpl(row.realm_name);
+    async __rowToRealm(row: any): Promise<IRealm> {
+        let realm = new Realm(row.realm_name);
         realm.id = row.id;
         return realm;
     }

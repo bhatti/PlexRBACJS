@@ -9,8 +9,8 @@ const _      = require('lodash'),
       errors = require('restify-errors');
 
 
-import {RealmImpl}                  from '../src/domain/realm';
-import type {RealmRepository}       from '../src/repository/interface';
+import {Realm}                  from '../src/domain/realm';
+import type {RealmRepository}   from '../src/repository/interface';
 
 /**
  * POST
@@ -23,7 +23,7 @@ server.post('/realms', async (req, res, next) => {
     let json = JSON.parse(req.body);
 	//
     try {
-        let realm = new RealmImpl(json.realmName);
+        let realm = new Realm(json.realmName);
         let saved = await server.realmRepository.save(realm);
         res.send(201);
         next();

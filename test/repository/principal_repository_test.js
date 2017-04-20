@@ -4,19 +4,19 @@ var expect = chai.expect;
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
-import type {Realm}                 from '../../src/domain/interface';
-import type {Claim}                 from '../../src/domain/interface';
-import type {Role}                  from '../../src/domain/interface';
+import type {IRealm}                from '../../src/domain/interface';
+import type {IClaim}                from '../../src/domain/interface';
+import type {IRole}                 from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
 import {ClaimRepositorySqlite}      from '../../src/repository/sqlite/claim_repository';
 import {RoleRepositorySqlite}       from '../../src/repository/sqlite/role_repository';
 import {PrincipalRepositorySqlite}  from '../../src/repository/sqlite/principal_repository';
 import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
 import {QueryOptions}               from '../../src/repository/interface';
-import {ClaimImpl}                  from '../../src/domain/claim';
-import {RealmImpl}                  from '../../src/domain/realm';
-import {RoleImpl}                   from '../../src/domain/role';
-import {PrincipalImpl}              from '../../src/domain/principal';
+import {Claim}                      from '../../src/domain/claim';
+import {Realm}                      from '../../src/domain/realm';
+import {Role}                       from '../../src/domain/role';
+import {Principal}                  from '../../src/domain/principal';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
@@ -64,8 +64,8 @@ describe('PrincipalRepository', function() {
 
   describe('#saveGetById', function() {
     it('should be able to get principal by id after saving', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved  = await this.principalRepository.save(new PrincipalImpl(realm, 'superuser'));
+        let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved  = await this.principalRepository.save(new Principal(realm, 'superuser'));
         let loaded = await this.principalRepository.findById(saved.id);
         assert.equal('superuser', loaded.principalName);
     });
@@ -74,8 +74,8 @@ describe('PrincipalRepository', function() {
 
   describe('#saveAndRemoveGetById', function() {
     it('should be able to save and remove principal by id', async function() {
-        let realm   = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved   = await this.principalRepository.save(new PrincipalImpl(realm, 'username'));
+        let realm   = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved   = await this.principalRepository.save(new Principal(realm, 'username'));
         let removed = await this.principalRepository.removeById(saved.id);
 
         assert.equal(true, removed);
@@ -92,8 +92,8 @@ describe('PrincipalRepository', function() {
 
   describe('#saveGetByName', function() {
     it('should be able to get principal by name after saving', async function() {
-        let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved     = await this.principalRepository.save(new PrincipalImpl(realm, 'xuser'));
+        let realm     = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved     = await this.principalRepository.save(new Principal(realm, 'xuser'));
         let loaded    = await this.principalRepository.findByName(realm.realmName, saved.principalName);
         assert.equal('xuser', loaded.principalName);
     });
@@ -114,8 +114,8 @@ describe('PrincipalRepository', function() {
 
   describe('#search', function() {
     it('should be able to search principal by name', async function() {
-        let realm       = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved       = await this.principalRepository.save(new PrincipalImpl(realm, 'searchuser'));
+        let realm       = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved       = await this.principalRepository.save(new Principal(realm, 'searchuser'));
         let criteria    = new Map();
         criteria.set('principal_name', 'searchuser');
         let results = await this.principalRepository.search(criteria);

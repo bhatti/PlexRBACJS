@@ -4,7 +4,7 @@ import {SecurityAccessRequest}      from '../domain/security_access_request';
 /**
  * SecurityManager checks if principal or role has proper access to claims
  */
-export interface SecurityManager {
+export interface ISecurityManager {
     /**
      * This method returns true if condition is true given context
      *

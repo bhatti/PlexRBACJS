@@ -24,9 +24,9 @@ server.post('/realms/:realm_id/principals', function(req, res, next) {
     }
 
     try {
-        let realm       = new RealmImpl('');
+        let realm       = new Realm('');
         realm.id        = Number.parseInt(req.params.realmId);
-        let principal   = new PrincipalImpl(realm, json.principalName);
+        let principal   = new Principal(realm, json.principalName);
         json.claims.forEach(claim => principal.claims.add(claim));
         json.roles.forEach(claim => principal.roles.add(role));
         //
@@ -91,9 +91,9 @@ server.put('/realms/:realm_id/principals/:principalId', function(req, res, next)
     }
 
     try {
-        let realm = new RealmImpl('');
+        let realm = new Realm('');
         realm.id  = Number.parseInt(req.params.realmId);
-        let principal   = new PrincipalImpl(realm, json.principalName);
+        let principal   = new Principal(realm, json.principalName);
         json.claims.forEach(claim => principal.claims.add(claim));
         json.roles.forEach(claim => principal.roles.add(role));
         //

@@ -1,17 +1,17 @@
 /*@flow*/
 
-import type {Claim, Realm}      from './interface';
+import type {IClaim, IRealm}    from './interface';
 import type {UniqueIdentifier}  from '../util/unique_id';
 
 const assert = require('assert');
 
 /**
- * ClaimImpl implements Claim for defining access attributes
+ * Claim implements IClaim for defining access attributes
  */
-export class ClaimImpl implements Claim, UniqueIdentifier {
+export class Claim implements IClaim, UniqueIdentifier {
     id:         number;     // unique database id
 
-    realm:      Realm;      // realm for the application
+    realm:      IRealm;     // realm for the application
 
     action:     string;     // This can be a single operation or regex based multiple operations
 
@@ -19,7 +19,7 @@ export class ClaimImpl implements Claim, UniqueIdentifier {
 
     condition:  string;     // This is optional for specifying runtime condition
 
-    constructor(theRealm:       Realm,
+    constructor(theRealm:       IRealm,
                 theAction:      string,
                 theResource:    string,
                 theCondition:   string) {

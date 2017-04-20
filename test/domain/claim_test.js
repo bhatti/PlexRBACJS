@@ -1,14 +1,14 @@
 var assert = require('chai').assert;
-import {ClaimImpl}      from '../../src/domain/claim';
-import {RealmImpl}      from '../../src/domain/realm';
+import {Claim}      from '../../src/domain/claim';
+import {Realm}      from '../../src/domain/realm';
 
 describe('Claim', function() {
-  let realm = new RealmImpl('domain');
+  let realm = new Realm('domain');
 
   describe('#constructor', function() {
     it('should fail without realm should fail', function() {
       try {
-        let claim = new ClaimImpl();
+        let claim = new Claim();
         assert.notOk('should have failed');
       } catch (e) {
       }
@@ -17,7 +17,7 @@ describe('Claim', function() {
 
   describe('#constructor', function() {
     it('should not fail without condition', function() {
-      let claim = new ClaimImpl(realm, 'action', 'resource', '');
+      let claim = new Claim(realm, 'action', 'resource', '');
       claim.condition = null;
       assert.notOk(claim.hasCondition());
     });
@@ -25,35 +25,35 @@ describe('Claim', function() {
 
   describe('#hasCondition', function() {
     it('should succeed with condition', function() {
-      let claim = new ClaimImpl(realm, 'action', 'resource', 'x = y');
+      let claim = new Claim(realm, 'action', 'resource', 'x = y');
       assert.ok(claim.hasCondition());
     });
   });
 
   describe('#implies', function() {
     it(' with different action should not match', function() {
-      let claim = new ClaimImpl(realm, 'read', 'file', '');
+      let claim = new Claim(realm, 'read', 'file', '');
       assert.notOk(claim.implies('write', 'file'));
     });
   });
 
   describe('#implies', function() {
     it('claim with same action/resource should match', function() {
-      let claim = new ClaimImpl(realm, 'read', 'file', '');
+      let claim = new Claim(realm, 'read', 'file', '');
       assert.ok(claim.implies('read', 'file'));
     });
   });
 
   describe('#implies', function() {
     it('claim with wildcard should match', function() {
-      let claim = new ClaimImpl(realm, '.*', 'database', '');
+      let claim = new Claim(realm, '.*', 'database', '');
       assert.ok(claim.implies('read', 'database'));
     });
   });
 
   describe('#implies', function() {
     it('claim with regex should match', function() {
-      let claim = new ClaimImpl(realm, '(write|read|update|delete)', 'database', '');
+      let claim = new Claim(realm, '(write|read|update|delete)', 'database', '');
       assert.ok(claim.implies('read', 'database'));
       assert.ok(claim.implies('write', 'database'));
       assert.notOk(claim.implies('destroy', 'database'));

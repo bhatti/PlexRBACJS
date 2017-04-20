@@ -1,24 +1,24 @@
 /* @flow Interface file */
-import type {Principal}             from '../domain/interface';
-import type {Claim}                 from '../domain/interface';
-import type {Realm}                 from '../domain/interface';
-import type {Role}                  from '../domain/interface';
+import type {IPrincipal}            from '../domain/interface';
+import type {IClaim}                from '../domain/interface';
+import type {IRealm}                from '../domain/interface';
+import type {IRole}                 from '../domain/interface';
 import type {ClaimRepository}       from '../repository/interface';
 import type {PrincipalRepository}   from '../repository/interface';
 import type {RealmRepository}       from '../repository/interface';
 import type {RoleRepository}        from '../repository/interface';
 import {PersistenceError}           from '../repository/persistence_error';
-import type {SecurityService}       from './interface';
+import type {ISecurityService}      from './interface';
 
 /**
- * SecurityServiceImpl implements SecurityService and provides access
+ * SecurityService implements ISecurityService and provides access
  * to manage principals, roles, and claims
  */
-export class SecurityServiceImpl implements SecurityService {
-    claimRepository: ClaimRepository;
-    principalRepository: PrincipalRepository;
-    realmRepository: RealmRepository;
-    roleRepository: RoleRepository;
+export class SecurityService implements ISecurityService {
+    claimRepository:        ClaimRepository;
+    principalRepository:    PrincipalRepository;
+    realmRepository:        RealmRepository;
+    roleRepository:         RoleRepository;
 
     constructor(theClaimRepository: ClaimRepository,
                 thePrincipalRepository: PrincipalRepository,
@@ -36,7 +36,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principalName - to look
      * @return principal
      */
-    async getPrincipal(realmName: string, principalName: string): Promise<Principal> {
+    async getPrincipal(realmName: string, principalName: string): Promise<IPrincipal> {
         return this.principalRepository.findByName(realmName, principalName);
     }
 
@@ -44,7 +44,7 @@ export class SecurityServiceImpl implements SecurityService {
      * This method saves principal
      * @param {*} principal - to save
      */
-    async addPrincipal(principal: Principal): Promise<Principal> {
+    async addPrincipal(principal: IPrincipal): Promise<IPrincipal> {
         return this.principalRepository.save(principal);
     }
 
@@ -53,7 +53,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} principal - to remove
      * @return true if successfully removed
      */
-    async removePrincipal(principal: Principal): Promise<boolean> {
+    async removePrincipal(principal: IPrincipal): Promise<boolean> {
         return this.principalRepository.removeById(principal.id);
     }
 
@@ -62,7 +62,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} realm - realm
      * @return - realm
      */
-    async addRealm(realm: Realm): Promise<Realm> {
+    async addRealm(realm: IRealm): Promise<IRealm> {
         return this.realmRepository.save(realm);
     }
 
@@ -71,7 +71,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} realmName - realm-name
      * @return - realm
      */
-    async getRealm(realmName: string): Promise<Realm> {
+    async getRealm(realmName: string): Promise<IRealm> {
         return this.realmRepository.findByName(realmName);
     }
 
@@ -80,7 +80,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} role - to save
      * @return - saved role
      */
-    async addRole(role: Role): Promise<Role> {
+    async addRole(role: IRole): Promise<IRole> {
         return this.roleRepository.save(role);
     }
 
@@ -89,7 +89,7 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} role - to delete
      * @return true if successfully removed
      */
-    async removeRole(role: Role): Promise<boolean> {
+    async removeRole(role: IRole): Promise<boolean> {
         return this.roleRepository.removeById(role.id);
     }    
 
@@ -97,7 +97,7 @@ export class SecurityServiceImpl implements SecurityService {
      * This method adds claim
      * @param {*} claim - to save
      */
-    async addClaim(claim: Claim): Promise<Claim> {
+    async addClaim(claim: IClaim): Promise<IClaim> {
         return this.claimRepository.save(claim);
     }
 
@@ -106,21 +106,21 @@ export class SecurityServiceImpl implements SecurityService {
      * @param {*} claim
      * @return true if successfully removed
      */
-    async removeClaim(claim: Claim): Promise<boolean> {
+    async removeClaim(claim: IClaim): Promise<boolean> {
         return this.claimRepository.removeById(claim.id);
     }
 
    /**
      * This method adds set of roles as parent
      */
-    async addParentsToRole(role: Role, parents: Array<Role>): Promise<Role> {
+    async addParentsToRole(role: IRole, parents: Array<IRole>): Promise<IRole> {
         return this.roleRepository.addParentsToRole(role, parents);
     }
 
     /**
      * This method remove set of roles as parent
      */
-    async removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role> {
+    async removeParentsFromRole(role: IRole, parents: Array<IRole>): Promise<IRole> {
         return this.roleRepository.removeParentsFromRole(role, parents);
     }
 

@@ -4,18 +4,18 @@ var expect = chai.expect;
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
-import type {Realm}                 from '../../src/domain/interface';
-import type {Claim}                 from '../../src/domain/interface';
+import type {IRealm}                from '../../src/domain/interface';
+import type {IClaim}                from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
 import {ClaimRepositorySqlite}      from '../../src/repository/sqlite/claim_repository';
 import {PrincipalRepositorySqlite}  from '../../src/repository/sqlite/principal_repository';
 import {RoleRepositorySqlite}       from '../../src/repository/sqlite/role_repository';
 import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
 import {QueryOptions}               from '../../src/repository/interface';
-import {ClaimImpl}                  from '../../src/domain/claim';
-import {RealmImpl}                  from '../../src/domain/realm';
-import {RoleImpl}                   from '../../src/domain/role';
-import {PrincipalImpl}              from '../../src/domain/principal';
+import {Claim}                      from '../../src/domain/claim';
+import {Realm}                      from '../../src/domain/realm';
+import {Role}                       from '../../src/domain/role';
+import {Principal}                  from '../../src/domain/principal';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
@@ -61,8 +61,8 @@ describe('ClaimRepository', function() {
 
   describe('#saveGetById', function() {
     it('should be able to get claim by id after saving', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let claim  = await this.claimRepository.save(new ClaimImpl(realm, 'action', 'resource', 'x = y'));
+        let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let claim  = await this.claimRepository.save(new Claim(realm, 'action', 'resource', 'x = y'));
         let loaded = await this.claimRepository.findById(claim.id);
         assert.equal('action', loaded.action);
         assert.equal('resource', loaded.resource);
@@ -73,8 +73,8 @@ describe('ClaimRepository', function() {
 
   describe('#saveAndRemoveGetById', function() {
     it('should be able to save and remove claim by id', async function() {
-        let realm   = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let claim   = await this.claimRepository.save(new ClaimImpl(realm, 'action', 'resource', 'x = y'));
+        let realm   = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let claim   = await this.claimRepository.save(new Claim(realm, 'action', 'resource', 'x = y'));
         let removed = await this.claimRepository.removeById(claim.id);
         assert.equal(true, removed);
     });
@@ -103,14 +103,14 @@ describe('ClaimRepository', function() {
 
   describe('#__savePrincipalClaims', function() {
     it('should be able to save claims to principal', async function() {
-        let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let principal = await this.principalRepository.save(new PrincipalImpl(realm, 'xuser'));
-        principal.claims.add(new ClaimImpl(principal.realm, 'read', 'resource1', 'a = b'));
-        principal.claims.add(new ClaimImpl(principal.realm, 'write', 'resource2', 'c = d'));
-        principal.claims.add(new ClaimImpl(principal.realm, 'delete', 'resource3', 'e = f'));
+        let realm     = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let principal = await this.principalRepository.save(new Principal(realm, 'xuser'));
+        principal.claims.add(new Claim(principal.realm, 'read', 'resource1', 'a = b'));
+        principal.claims.add(new Claim(principal.realm, 'write', 'resource2', 'c = d'));
+        principal.claims.add(new Claim(principal.realm, 'delete', 'resource3', 'e = f'));
         principal     = await this.claimRepository.__savePrincipalClaims(principal);
         assert.equal(3, principal.claims.length, `incorrect claims principal ${principal}`);
-        principal.claims.add(new ClaimImpl(principal.realm, 'view', 'resource4', 'g = h'));
+        principal.claims.add(new Claim(principal.realm, 'view', 'resource4', 'g = h'));
         await this.principalRepository.save(principal);
         let loaded    = await this.principalRepository.findByName(realm.realmName, principal.principalName);
         assert.equal(4, loaded.claims.length);
@@ -120,11 +120,11 @@ describe('ClaimRepository', function() {
 
   describe('#__savePrincipalClaims', function() {
     it('should be able to remove claims to principal', async function() {
-        let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let principal = await this.principalRepository.save(new PrincipalImpl(realm, 'xuser'));
-        principal.claims.add(new ClaimImpl(principal.realm, 'read', 'resource1', 'a = b'));
-        principal.claims.add(new ClaimImpl(principal.realm, 'write', 'resource2', 'c = d'));
-        principal.claims.add(new ClaimImpl(principal.realm, 'delete', 'resource3', 'e = f'));
+        let realm     = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let principal = await this.principalRepository.save(new Principal(realm, 'xuser'));
+        principal.claims.add(new Claim(principal.realm, 'read', 'resource1', 'a = b'));
+        principal.claims.add(new Claim(principal.realm, 'write', 'resource2', 'c = d'));
+        principal.claims.add(new Claim(principal.realm, 'delete', 'resource3', 'e = f'));
         principal     = await this.claimRepository.__savePrincipalClaims(principal);
         assert.equal(3, principal.claims.length);
         principal.claims.length = 0;
@@ -136,16 +136,16 @@ describe('ClaimRepository', function() {
 
     describe('#__saveRoleClaims', function() {
       it('should be able to save claims to role', async function() {
-          let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-          let role      = await this.roleRepository.save(new RoleImpl(realm, 'admin-role'));
+          let realm     = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+          let role      = await this.roleRepository.save(new Role(realm, 'admin-role'));
 
-          role.claims.add(new ClaimImpl(role.realm, 'read', 'resource1', 'a = b'));
-          role.claims.add(new ClaimImpl(role.realm, 'write', 'resource2', 'c = d'));
-          role.claims.add(new ClaimImpl(role.realm, 'delete', 'resource3', 'e = f'));
+          role.claims.add(new Claim(role.realm, 'read', 'resource1', 'a = b'));
+          role.claims.add(new Claim(role.realm, 'write', 'resource2', 'c = d'));
+          role.claims.add(new Claim(role.realm, 'delete', 'resource3', 'e = f'));
           role     = await this.claimRepository.__saveRoleClaims(role);
 
           assert.equal(3, role.claims.length);
-          role.claims.add(new ClaimImpl(role.realm, 'view', 'resource4', 'g = h'));
+          role.claims.add(new Claim(role.realm, 'view', 'resource4', 'g = h'));
           await this.claimRepository.__saveRoleClaims(role);
           let loaded    = await this.roleRepository.findByName(realm.realmName, role.roleName);
           assert.equal(4, loaded.claims.length);
@@ -155,12 +155,12 @@ describe('ClaimRepository', function() {
 
     describe('#__saveRoleClaims', function() {
       it('should be able to remove claims to role', async function() {
-          let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-          let role      = await this.roleRepository.save(new RoleImpl(realm, 'admin-role'));
+          let realm     = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+          let role      = await this.roleRepository.save(new Role(realm, 'admin-role'));
 
-          role.claims.add(new ClaimImpl(role.realm, 'read', 'resource1', 'a = b'));
-          role.claims.add(new ClaimImpl(role.realm, 'write', 'resource2', 'c = d'));
-          role.claims.add(new ClaimImpl(role.realm, 'delete', 'resource3', 'e = f'));
+          role.claims.add(new Claim(role.realm, 'read', 'resource1', 'a = b'));
+          role.claims.add(new Claim(role.realm, 'write', 'resource2', 'c = d'));
+          role.claims.add(new Claim(role.realm, 'delete', 'resource3', 'e = f'));
           role     = await this.claimRepository.__saveRoleClaims(role);
           assert.equal(3, role.claims.length);
           role.claims.length = 0;
@@ -172,19 +172,19 @@ describe('ClaimRepository', function() {
 
     describe('#saveClaimToPrincipalAndRole', function() {
       it('should be able to save claims to principal and role', async function() {
-          let realm     = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+          let realm     = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
 
-          let principal = new PrincipalImpl(realm, 'xuser');
+          let principal = new Principal(realm, 'xuser');
 
-          principal.claims.add(new ClaimImpl(principal.realm, 'read', 'file', 'a = b'));
-          principal.claims.add(new ClaimImpl(principal.realm, 'write', 'file', 'c = d'));
-          principal.claims.add(new ClaimImpl(principal.realm, 'delete', 'file', 'e = f'));
+          principal.claims.add(new Claim(principal.realm, 'read', 'file', 'a = b'));
+          principal.claims.add(new Claim(principal.realm, 'write', 'file', 'c = d'));
+          principal.claims.add(new Claim(principal.realm, 'delete', 'file', 'e = f'));
 
           for (let i = 0; i < 3; i++) {
-              let role          = new RoleImpl(realm, `admin-role_${i}`);
-              role.claims.add(new ClaimImpl(principal.realm, 'read', 'url', 'a = b'));
-              role.claims.add(new ClaimImpl(principal.realm, 'write', 'url', 'c = d'));
-              role.claims.add(new ClaimImpl(principal.realm, 'delete', 'url', 'e = f'));
+              let role          = new Role(realm, `admin-role_${i}`);
+              role.claims.add(new Claim(principal.realm, 'read', 'url', 'a = b'));
+              role.claims.add(new Claim(principal.realm, 'write', 'url', 'c = d'));
+              role.claims.add(new Claim(principal.realm, 'delete', 'url', 'e = f'));
 
               await this.roleRepository.save(role);
               principal.roles.add(role);

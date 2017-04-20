@@ -4,7 +4,7 @@
 /**
  * ConditionEvaluator evaluates dynamic condition based on context.
  */
-export interface ConditionEvaluator {
+export interface IConditionEvaluator {
     /**
      * This method returns true if condition is true given context
      * 

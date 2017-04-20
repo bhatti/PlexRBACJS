@@ -1,13 +1,13 @@
 /*@flow*/
 
-import type {Principal, Claim, Role, Realm}     from './interface';
+import type {IPrincipal, IClaim, IRole, IRealm} from './interface';
 import {UniqueArray}                            from '../util/unique_array';
 import type {UniqueIdentifier}                  from '../util/unique_id';
 
 const assert = require('assert');
 
 
-export class PrincipalImpl implements Principal, UniqueIdentifier {
+export class Principal implements IPrincipal, UniqueIdentifier {
     /**
      * unique database id
      */
@@ -21,19 +21,19 @@ export class PrincipalImpl implements Principal, UniqueIdentifier {
     /**
      * realm for this principal
      */
-    realm:          Realm;
+    realm:          IRealm;
 
     /**
      * set of Claims
      */
-    claims:         UniqueArray<Claim>;
+    claims:         UniqueArray<IClaim>;
 
     /**
      * set of roles
      */
-    roles:          UniqueArray<Role>;
+    roles:          UniqueArray<IRole>;
 
-    constructor(theRealm: Realm,
+    constructor(theRealm: IRealm,
                 thePrincipalName: string) {
         //
         assert(theRealm, 'realm is required');
@@ -49,8 +49,8 @@ export class PrincipalImpl implements Principal, UniqueIdentifier {
         return `${this.realm.realmName}_${this.principalName}`;
     }
 
-    allClaims(): UniqueArray<Claim> {
-        let allClaims: UniqueArray<Claim> = new UniqueArray();
+    allClaims(): UniqueArray<IClaim> {
+        let allClaims: UniqueArray<IClaim> = new UniqueArray();
         this.claims.forEach(claim => {
             allClaims.add(claim);
         });
@@ -60,7 +60,7 @@ export class PrincipalImpl implements Principal, UniqueIdentifier {
         return allClaims;
     }
 
-    ___loadRoleClaims(role: Role, allClaims: UniqueArray<Claim>):void {
+    ___loadRoleClaims(role: IRole, allClaims: UniqueArray<IClaim>):void {
         role.claims.forEach(claim => {
             allClaims.add(claim);
         });

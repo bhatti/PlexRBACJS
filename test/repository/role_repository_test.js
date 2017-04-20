@@ -4,17 +4,17 @@ var expect = chai.expect;
 var chaiAsPromised = require("chai-as-promised");
 chai.use(chaiAsPromised);
 
-import type {Realm}                 from '../../src/domain/interface';
-import type {Role}                  from '../../src/domain/interface';
+import type {IRealm}                from '../../src/domain/interface';
+import type {IRole}                 from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
 import {RoleRepositorySqlite}       from '../../src/repository/sqlite/role_repository';
 import {ClaimRepositorySqlite}      from '../../src/repository/sqlite/claim_repository';
 import {PrincipalRepositorySqlite}  from '../../src/repository/sqlite/principal_repository';
 import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
 import {QueryOptions}               from '../../src/repository/interface';
-import {RoleImpl}                   from '../../src/domain/role';
-import {RealmImpl}                  from '../../src/domain/realm';
-import {PrincipalImpl}              from '../../src/domain/principal';
+import {Role}                       from '../../src/domain/role';
+import {Realm}                      from '../../src/domain/realm';
+import {Principal}                  from '../../src/domain/principal';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
@@ -63,8 +63,8 @@ describe('RoleRepository', function() {
 
   describe('#saveGetById', function() {
     it('should be able to get role by id after saving', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved  = await this.roleRepository.save(new RoleImpl(realm, 'admin-role'));
+        let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved  = await this.roleRepository.save(new Role(realm, 'admin-role'));
         let loaded = await this.roleRepository.findById(saved.id);
         assert.equal('admin-role', loaded.roleName);
         assert.equal(realm.realmName, loaded.realm.realmName);
@@ -74,8 +74,8 @@ describe('RoleRepository', function() {
 
   describe('#saveAndRemoveGetById', function() {
     it('should be able to save and remove role by id', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved  = await this.roleRepository.save(new RoleImpl(realm, 'admin-role'));
+        let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved  = await this.roleRepository.save(new Role(realm, 'admin-role'));
         let removed = this.roleRepository.removeById(saved.id);
         assert.ok(removed);
         try {
@@ -90,8 +90,8 @@ describe('RoleRepository', function() {
 
   describe('#saveGetByName', function() {
     it('should be able to get role by name after saving', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved  = await this.roleRepository.save(new RoleImpl(realm, 'manager-role'));
+        let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved  = await this.roleRepository.save(new Role(realm, 'manager-role'));
         let loaded = await this.roleRepository.findByName(saved.realm.realmName, saved.roleName);
         assert.equal(saved.roleName, loaded.roleName);
         assert.equal(realm.realmName, loaded.realm.realmName);
@@ -114,10 +114,10 @@ describe('RoleRepository', function() {
         let childName = ['tech-manager'];
         let allRoles = [...parentNames, ...childName];
         //
-        let realm    = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+        let realm    = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
         let allSaved = [];
         allRoles.forEach(async name => {
-            allSaved.push(this.roleRepository.save(new RoleImpl(realm, name)));
+            allSaved.push(this.roleRepository.save(new Role(realm, name)));
         });
         await Promise.all(allSaved);
         //
@@ -145,10 +145,10 @@ describe('RoleRepository', function() {
         let childName = ['tech-manager'];
         let allRoles = [...parentNames, ...childName];
         //
-        let realm    = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
+        let realm    = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
         let allSaved = [];
         allRoles.forEach(async name => {
-            allSaved.push(this.roleRepository.save(new RoleImpl(realm, name)));
+            allSaved.push(this.roleRepository.save(new Role(realm, name)));
         });
         await Promise.all(allSaved);
         //
@@ -187,12 +187,12 @@ describe('RoleRepository', function() {
   describe('#__savePrincipalRoles', function() {
     it('should be able to save roles for principal', async function() {
         let rolesNames = ['tech-support', 'senior-tech-support', 'receptionist'];
-        let realm      = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let principal  = await this.principalRepository.save(new PrincipalImpl(realm, 'johnd'));
+        let realm      = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let principal  = await this.principalRepository.save(new Principal(realm, 'johnd'));
 
         let savePromises = [];
         rolesNames.forEach(async name => {
-            savePromises.push(this.roleRepository.save(new RoleImpl(realm, name)).then(role => {
+            savePromises.push(this.roleRepository.save(new Role(realm, name)).then(role => {
                 principal.roles.add(role);
             }));
         });
@@ -219,12 +219,12 @@ describe('RoleRepository', function() {
     it('should be able to remove roles from principal', async function() {
 
         let rolesNames = ['tech-support', 'senior-tech-support', 'receptionist'];
-        let realm      = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let principal  = await this.principalRepository.save(new PrincipalImpl(realm, 'johnd'));
+        let realm      = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let principal  = await this.principalRepository.save(new Principal(realm, 'johnd'));
 
         let savePromises = [];
         rolesNames.forEach(async name => {
-            savePromises.push(this.roleRepository.save(new RoleImpl(realm, name)).then(role => {
+            savePromises.push(this.roleRepository.save(new Role(realm, name)).then(role => {
                 principal.roles.add(role);
             }));
         });
@@ -243,11 +243,11 @@ describe('RoleRepository', function() {
   describe('#__loadPrincipalRoles', function() {
     it('should be able to load roles for principal', async function() {
         let rolesNames = ['tech-support', 'senior-tech-support', 'receptionist'];
-        let realm      = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let principal  = new PrincipalImpl(realm, 'johnd');
+        let realm      = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let principal  = new Principal(realm, 'johnd');
 
         rolesNames.forEach(async name => {
-            let role = await this.roleRepository.save(new RoleImpl(realm, name));
+            let role = await this.roleRepository.save(new Role(realm, name));
             principal.roles.add(role);
         });
         principal       = await this.principalRepository.save(principal);
@@ -259,8 +259,8 @@ describe('RoleRepository', function() {
 
   describe('#search', function() {
     it('should be able to search domain by name', async function() {
-        let realm  = await this.realmRepository.save(new RealmImpl(`random-domain_${Math.random()}`));
-        let saved  = await this.roleRepository.save(new RoleImpl(realm, 'search-role'));
+        let realm  = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let saved  = await this.roleRepository.save(new Role(realm, 'search-role'));
 
         let criteria    = new Map();
         criteria.set('role_name', 'search-role');

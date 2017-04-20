@@ -2,14 +2,14 @@
 
 const assert = require('assert');
 
-import type {Principal}         from '../../domain/interface';
-import type {Realm}             from '../../domain/interface';
-import type {Role}              from '../../domain/interface';
+import type {IPrincipal}        from '../../domain/interface';
+import type {IRealm}            from '../../domain/interface';
+import type {IRole}             from '../../domain/interface';
 import type {ClaimRepository}   from '../interface';
 import type {RoleRepository}    from '../interface';
 import type {RealmRepository}   from '../interface';
 import {QueryOptions}           from '../interface';
-import {RoleImpl}               from '../../domain/role';
+import {Role}                   from '../../domain/role';
 import {PersistenceError}       from '../persistence_error';
 import {DBHelper}               from './db_helper';
 import {QueryHelper}            from './query_helper';
@@ -47,7 +47,7 @@ export class RoleRepositorySqlite implements RoleRepository {
      * This method finds object by id
      * @param {*} id - database id
      */
-    async findById(id: number): Promise<Role> {
+    async findById(id: number): Promise<IRole> {
         assert(id, 'role-id not specified');
 
         let cached = this.cache.get('role', `id_${id}`);
@@ -75,7 +75,7 @@ export class RoleRepositorySqlite implements RoleRepository {
      * @param {*} realmName
      * @param {*} roleName
      */
-    async findByName(realmName: string, roleName: string): Promise<Role> {
+    async findByName(realmName: string, roleName: string): Promise<IRole> {
         assert(realmName, 'realm-name not specified');
         assert(roleName, 'role-name not specified');
 
@@ -102,7 +102,7 @@ export class RoleRepositorySqlite implements RoleRepository {
      * This method saves object and returns updated object
      * @param {*} role - to save
      */
-    async save(role: Role): Promise<Role> {
+    async save(role: IRole): Promise<IRole> {
         assert(role, 'role not specified');
         assert(role.realm && role.realm.id, 'realm not specified');
         //
@@ -141,7 +141,7 @@ export class RoleRepositorySqlite implements RoleRepository {
    /**
      * This method adds set of roles as parent
      */
-    async addParentsToRole(role: Role, parents: Array<Role>): Promise<Role> {
+    async addParentsToRole(role: IRole, parents: Array<IRole>): Promise<IRole> {
         assert(role, 'role not specified');
         assert(parents, 'role parents not specified');
 
@@ -170,7 +170,7 @@ export class RoleRepositorySqlite implements RoleRepository {
     /**
      * This method remove set of roles as parent
      */
-    async removeParentsFromRole(role: Role, parents: Array<Role>): Promise<Role> {
+    async removeParentsFromRole(role: IRole, parents: Array<IRole>): Promise<IRole> {
         assert(role, 'role not specified');
         assert(parents, 'role parents not specified');
         //
@@ -204,7 +204,7 @@ export class RoleRepositorySqlite implements RoleRepository {
      * @param {*} principal
      * @param {*} roles
      */
-    async __savePrincipalRoles(principal: Principal): Promise<Principal> {
+    async __savePrincipalRoles(principal: IPrincipal): Promise<IPrincipal> {
         assert(principal && principal.id, 'principal not specified');
         //
         let deletePromise = new Promise((resolve, reject) => {
@@ -266,7 +266,7 @@ export class RoleRepositorySqlite implements RoleRepository {
     /**
      * This method queries database and returns list of objects
      */
-    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<Role>> {
+    async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IRole>> {
         let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
              return this.__rowToRole(row);
@@ -276,7 +276,7 @@ export class RoleRepositorySqlite implements RoleRepository {
     /**
      * This method loads roles for given principal
      */
-    async __loadPrincipalRoles(principal: Principal): Promise<Principal> {
+    async __loadPrincipalRoles(principal: IPrincipal): Promise<IPrincipal> {
         assert(principal && principal.id, 'principal not specified');
         //
         principal.roles.length = 0;
@@ -304,7 +304,7 @@ export class RoleRepositorySqlite implements RoleRepository {
 
 
      // This method loads parent roles
-    async _loadParentRoles(role: Role): Promise<Array<Role>> {
+    async _loadParentRoles(role: IRole): Promise<Array<IRole>> {
         assert(role && role.id, 'role not specified');
         //
         let criteria: Map<string, any> = new Map();
@@ -322,10 +322,10 @@ export class RoleRepositorySqlite implements RoleRepository {
         });
     }
 
-    async __rowToRole(row: any): Promise<Role> {
+    async __rowToRole(row: any): Promise<IRole> {
         //
         let realm               = await this.realmRepository.findById(row.realm_id);
-        let role                = new RoleImpl(realm, row.role_name);
+        let role                = new Role(realm, row.role_name);
         role.id                 = row.id;
         let promiseLoadParents  = await this._loadParentRoles(role);
         let promiseLoadClaims   = await this.claimRepository.__loadRoleClaims(role);
