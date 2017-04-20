@@ -10,7 +10,7 @@ import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repo
 import {RoleRepositorySqlite}       from '../../src/repository/sqlite/role_repository';
 import {ClaimRepositorySqlite}      from '../../src/repository/sqlite/claim_repository';
 import {PrincipalRepositorySqlite}  from '../../src/repository/sqlite/principal_repository';
-import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
+import {DBFactory}                  from '../../src/repository/sqlite/db_factory';
 import {QueryOptions}               from '../../src/repository/interface';
 import {Role}                       from '../../src/domain/role';
 import {Realm}                      from '../../src/domain/realm';
@@ -20,32 +20,32 @@ import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
 
 describe('RoleRepository', function() {
-  let dbHelper:         DBHelper;
+  let dbFactory:        DBFactory;
   let roleRepository:   RoleRepositorySqlite;
   let realmRepository:  RealmRepositorySqlite;
   let claimRepository:  ClaimRepositorySqlite;
   let principalRepository:  PrincipalRepositorySqlite;
 
   before(function(done) {
-    this.dbHelper = new DBHelper(':memory:');
-    //this.dbHelper = new DBHelper('/tmp/test.db');
-    this.dbHelper.db.on('trace', function(trace){
+    this.dbFactory = new DBFactory(':memory:');
+    //this.dbFactory = new DBFactory('/tmp/test.db');
+    this.dbFactory.db.on('trace', function(trace){
         //console.log(`trace ${trace}`);
     })
     //
-    this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
-    this.claimRepository     = new ClaimRepositorySqlite(this.dbHelper, this.realmRepository);
-    this.roleRepository      = new RoleRepositorySqlite(this.dbHelper, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
-    this.principalRepository = new PrincipalRepositorySqlite(this.dbHelper, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
+    this.realmRepository     = new RealmRepositorySqlite(this.dbFactory, new DefaultSecurityCache());
+    this.claimRepository     = new ClaimRepositorySqlite(this.dbFactory, this.realmRepository);
+    this.roleRepository      = new RoleRepositorySqlite(this.dbFactory, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
+    this.principalRepository = new PrincipalRepositorySqlite(this.dbFactory, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
 
     //
-    this.dbHelper.createTables(() => {
+    this.dbFactory.createTables(() => {
       done();
     });
   });
 
   after(function(done) {
-    this.dbHelper.close();
+    this.dbFactory.close();
     done();
   });
 
@@ -183,6 +183,30 @@ describe('RoleRepository', function() {
     });
   });
 
+
+  describe('#__savePrincipalRoles', function() {
+    it('should be able to save roles for principal only if current date is effective', async function() {
+        let rolesNames = ['tech-support', 'senior-tech-support', 'receptionist'];
+        let realm      = await this.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+        let principal  = await this.principalRepository.save(new Principal(realm, 'johnd'));
+
+        let savePromises = [];
+        rolesNames.forEach(async name => {
+            let role = new Role(realm, name);
+            role.startDate = new Date(0);
+            role.endDate = new Date(0);
+            savePromises.push(this.roleRepository.save(role).then(role => {
+                principal.roles.add(role);
+            }));
+        });
+        await Promise.all(savePromises);
+
+        //
+        this.roleRepository.__savePrincipalRoles(principal);
+        let loaded      = await this.principalRepository.findById(principal.id);
+        assert.equal(0, loaded.roles.length);
+    });
+  });
 
   describe('#__savePrincipalRoles', function() {
     it('should be able to save roles for principal', async function() {

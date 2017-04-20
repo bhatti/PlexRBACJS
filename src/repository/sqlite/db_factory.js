@@ -4,10 +4,10 @@ var sqlite3 =               require('sqlite3').verbose();
 import {QueryOptions}       from '../interface';
 import {PersistenceError}   from '../persistence_error';
 /**
- * DBHelper provides helper DB methods
+ * DBFactory provides helper DB methods
  * See https://github.com/mapbox/node-sqlite3/wiki
  */
-export class DBHelper {
+export class DBFactory {
     db: sqlite3.Database;
 
     constructor(path: string) {
@@ -20,10 +20,10 @@ export class DBHelper {
             'CREATE TABLE if not exists principals (realm_id INT, principal_name TEXT, PRIMARY KEY(realm_id, principal_name))',
             'CREATE TABLE if not exists roles (realm_id INT, role_name TEXT, PRIMARY KEY(realm_id, role_name))',
             'CREATE TABLE if not exists role_parents (role_id INT, parent_role_id INT, PRIMARY KEY(role_id, parent_role_id))',
-            'CREATE TABLE if not exists principals_roles (principal_id INT, role_id INT, PRIMARY KEY(principal_id, role_id))',
-            'CREATE TABLE if not exists claims (realm_id INT, action TEXT, resource TEXT, condition TEXT, PRIMARY KEY(realm_id, action, resource, condition))',
-            'CREATE TABLE if not exists roles_claims (role_id INT, claim_id INT, PRIMARY KEY(role_id, claim_id))',
-            'CREATE TABLE if not exists principals_claims (principal_id INT, claim_id INT, PRIMARY KEY(principal_id, claim_id))',
+            'CREATE TABLE if not exists claims (realm_id INT, action TEXT, resource TEXT, condition TEXT, effect TEXT, PRIMARY KEY(realm_id, action, resource, condition))',
+            'CREATE TABLE if not exists principals_roles (principal_id INT, role_id INT, start_date TEXT, end_date TEXT, PRIMARY KEY(principal_id, role_id))',
+            'CREATE TABLE if not exists roles_claims (role_id INT, claim_id INT, start_date TEXT, end_date TEXT, PRIMARY KEY(role_id, claim_id))',
+            'CREATE TABLE if not exists principals_claims (principal_id INT, claim_id INT, start_date TEXT, end_date TEXT, PRIMARY KEY(principal_id, claim_id))',
         ];
         let indexStmts = [
             'CREATE UNIQUE INDEX realms_ndx on realms (realm_name)',
@@ -35,7 +35,7 @@ export class DBHelper {
             'CREATE UNIQUE INDEX principals_claims_ndx on principals_claims(principal_id, claim_id)'
         ];
         //
-        DBHelper.__execAllAsync(this.db, createStmts, indexStmts).then(results => {
+        DBFactory.__execAllAsync(this.db, createStmts, indexStmts).then(results => {
             doneCB();
         });
     }
@@ -59,7 +59,7 @@ export class DBHelper {
             'DROP INDEX role_parents_ndx',
             'DROP INDEX principals_claims_ndx'
             ];
-        DBHelper.__execAllAsync(this.db, dropStmts).then(results => {
+        DBFactory.__execAllAsync(this.db, dropStmts).then(results => {
             doneCB();
         });
     }
@@ -67,13 +67,13 @@ export class DBHelper {
     static __execAllAsync(db, stmts, nextStmts) {
         let promises = [];
         stmts.forEach(stmt => {
-            promises.push(DBHelper.__execAsync(db, stmt));
+            promises.push(DBFactory.__execAsync(db, stmt));
         });
 
         return Promise.all(promises).
             then(results => {
             if (nextStmts) {
-                return DBHelper.__execAllAsync(db, nextStmts, null);
+                return DBFactory.__execAllAsync(db, nextStmts, null);
             } 
         }).
             catch(err => {

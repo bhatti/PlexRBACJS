@@ -7,7 +7,7 @@ import type {RealmRepository}   from '../interface';
 import {QueryOptions}           from '../interface';
 import {Realm}                  from '../../domain/realm';
 import {PersistenceError}       from '../persistence_error';
-import {DBHelper}               from './db_helper';
+import {DBFactory}              from './db_factory';
 import {QueryHelper}            from './query_helper';
 import type {SecurityCache}     from '../../cache/interface';
 
@@ -16,16 +16,16 @@ import type {SecurityCache}     from '../../cache/interface';
  * methods for realm objects
  */
 export class RealmRepositorySqlite implements RealmRepository {
-    dbHelper:   DBHelper;
+    dbFactory:  DBFactory;
     sqlPrefix:  string;
     cache:      SecurityCache;
 
-    constructor(theDBHelper: DBHelper, theCache: SecurityCache) {
-        assert(theDBHelper, 'db-helper not specified');
+    constructor(theDBFactory: DBFactory, theCache: SecurityCache) {
+        assert(theDBFactory, 'db-helper not specified');
         assert(theCache, 'cache not specified');
-        this.dbHelper = theDBHelper;
-        this.cache = theCache;
-        this.sqlPrefix = 'SELECT rowid AS id, realm_name FROM realms';
+        this.dbFactory  = theDBFactory;
+        this.cache      = theCache;
+        this.sqlPrefix  = 'SELECT rowid AS id, realm_name FROM realms';
     }
 
     /**
@@ -40,7 +40,7 @@ export class RealmRepositorySqlite implements RealmRepository {
             return Promise.resolve(cached);
         }
         //
-        let db = this.dbHelper.db;
+        let db = this.dbFactory.db;
         return new Promise((resolve, reject) => {
             db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
@@ -73,7 +73,7 @@ export class RealmRepositorySqlite implements RealmRepository {
         }
 
         return new Promise((resolve, reject) => {
-            this.dbHelper.db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
+            this.dbFactory.db.get(`${this.sqlPrefix} WHERE realm_name == ?`, realmName, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find realm with name ${realmName}`));
                 } else if (row) {
@@ -103,7 +103,7 @@ export class RealmRepositorySqlite implements RealmRepository {
         } else {
             //
             return new Promise((resolve, reject) => {
-                let stmt = this.dbHelper.db.prepare('INSERT INTO realms VALUES (?)');
+                let stmt = this.dbFactory.db.prepare('INSERT INTO realms VALUES (?)');
                 stmt.run(realm.realmName, function(err) {
                     realm.id = this.lastID;
                 });
@@ -132,7 +132,7 @@ export class RealmRepositorySqlite implements RealmRepository {
      * This method queries database and returns list of objects
      a*/
     async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IRealm>> {
-        let q:QueryHelper<Realm> = new QueryHelper(this.dbHelper.db);
+        let q:QueryHelper<Realm> = new QueryHelper(this.dbFactory.db);
         return q.query(this.sqlPrefix, criteria, row => {
              return this.__rowToRealm(row);
          }, options);

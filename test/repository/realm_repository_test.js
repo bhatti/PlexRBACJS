@@ -6,31 +6,31 @@ chai.use(chaiAsPromised);
 
 import type {IRealm}                from '../../src/domain/interface';
 import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repository';
-import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
+import {DBFactory}                  from '../../src/repository/sqlite/db_factory';
 import {QueryOptions}               from '../../src/repository/interface';
 import {Realm}                      from '../../src/domain/realm';
 import {PersistenceError}           from '../../src/repository/persistence_error';
 import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
 describe('RealmRepository', function() {
-    let dbHelper:         DBHelper;
+    let dbFactory:        DBFactory;
     let realmRepository:  RealmRepositorySqlite;
 
     before(function(done) {
-      this.dbHelper = new DBHelper(':memory:');
-      //this.dbHelper = new DBHelper('/tmp/test.db');
-      this.dbHelper.db.on('trace', function(trace){
+      this.dbFactory = new DBFactory(':memory:');
+      //this.dbFactory = new DBFactory('/tmp/test.db');
+      this.dbFactory.db.on('trace', function(trace){
           //console.log(`trace ${trace}`);
       })
       //
-      this.realmRepository = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
-      this.dbHelper.createTables(() => {
+      this.realmRepository = new RealmRepositorySqlite(this.dbFactory, new DefaultSecurityCache());
+      this.dbFactory.createTables(() => {
         done();
       });
     });
 
     after(function(done) {
-      this.dbHelper.close();
+      this.dbFactory.close();
       done();
     });
 

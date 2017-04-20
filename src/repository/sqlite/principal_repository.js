@@ -9,7 +9,7 @@ import type {ClaimRepository}       from '../interface';
 import {QueryOptions}               from '../interface';
 import {Principal}                  from '../../domain/principal';
 import {PersistenceError}           from '../persistence_error';
-import {DBHelper}                   from './db_helper';
+import {DBFactory}                  from './db_factory';
 import {QueryHelper}                from './query_helper';
 import type {SecurityCache}         from '../../cache/interface';
 
@@ -18,24 +18,24 @@ import type {SecurityCache}         from '../../cache/interface';
  * data access methods for principal objects
  */
 export class PrincipalRepositorySqlite implements PrincipalRepository {
-    dbHelper:           DBHelper;
+    dbFactory:          DBFactory;
     realmRepository:    RealmRepository;
     roleRepository:     RoleRepository;
     claimRepository:    ClaimRepository;
     sqlPrefix:          string;
     cache:              SecurityCache;
 
-    constructor(theDBHelper: DBHelper,
+    constructor(theDBFactory: DBFactory,
         theRealmRepository: RealmRepository,
         theRoleRepository: RoleRepository,
         theClaimRepository: ClaimRepository,
         theCache: SecurityCache) {
-        assert(theDBHelper, 'db-helper not specified');
+        assert(theDBFactory, 'db-helper not specified');
         assert(theRealmRepository, 'realm-repository not specified');
         assert(theRoleRepository, 'role-repository not specified');
         assert(theClaimRepository, 'claim-repository not specified');
         assert(theCache, 'cache not specified');
-        this.dbHelper           = theDBHelper;
+        this.dbFactory          = theDBFactory;
         this.realmRepository    = theRealmRepository;
         this.roleRepository     = theRoleRepository;
         this.claimRepository    = theClaimRepository;
@@ -51,7 +51,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
         assert(id, 'principal-id not specified');
 
         return new Promise((resolve, reject) => {
-            this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
+            this.dbFactory.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find principal with id ${id}`));
                 } else if (row) {
@@ -77,7 +77,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 
         return new Promise((resolve, reject) => {
             this.realmRepository.findByName(realmName).then(realm => {
-                this.dbHelper.db.get(
+                this.dbFactory.db.get(
                     `${this.sqlPrefix} WHERE realm_id = ? AND principal_name == ?`,
                   realm.id, principalName, (err, row) => {
                     if (err) {
@@ -104,7 +104,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 
         let savePrincipal = new Promise((resolve, reject) => {
             if (principal.id) {
-                let stmt = this.dbHelper.db.prepare('UPDATE principals SET principal_name = ? WHERE rowid = ?');
+                let stmt = this.dbFactory.db.prepare('UPDATE principals SET principal_name = ? WHERE rowid = ?');
                 stmt.run(principal.principalName, principal.realm.id);
                 stmt.finalize(err => {
                     if (err) {
@@ -115,7 +115,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                 });
 
             } else {
-                let stmt = this.dbHelper.db.prepare('INSERT INTO principals VALUES (?, ?)');
+                let stmt = this.dbFactory.db.prepare('INSERT INTO principals VALUES (?, ?)');
                 stmt.run(principal.realm.id, principal.principalName, function(err) {
                     principal.id = this.lastID;
                 });
@@ -141,9 +141,9 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
         assert(id, 'principal-id not specified');
 
         let removePromise = new Promise((resolve, reject) => {
-			                this.dbHelper.db.run('DELETE FROM principals_claims WHERE principal_id = ?', id, (err) => {});
-			                this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?', id, (err) => {});
-			                this.dbHelper.db.run('DELETE FROM principals WHERE rowid = ?', id, (err) => {
+			                this.dbFactory.db.run('DELETE FROM principals_claims WHERE principal_id = ?', id, (err) => {});
+			                this.dbFactory.db.run('DELETE FROM principals_roles WHERE principal_id = ?', id, (err) => {});
+			                this.dbFactory.db.run('DELETE FROM principals WHERE rowid = ?', id, (err) => {
 				                  if (err) {
 					                    reject(new PersistenceError(`Failed to remove principal ${id}`));
 				                  } else {
@@ -158,7 +158,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
      * This method queries database and returns list of objects
      */
     async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IPrincipal>> {
-        let q:QueryHelper<Principal> = new QueryHelper(this.dbHelper.db);
+        let q:QueryHelper<Principal> = new QueryHelper(this.dbFactory.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
              return this.__rowToPrincipal(row);
          }, options);

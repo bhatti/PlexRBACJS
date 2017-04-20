@@ -21,14 +21,22 @@ export class Role implements IRole, UniqueIdentifier {
 
     parents:    UniqueArray<IRole>;      // optional parent role
 
+    startDate:  Date;       // start effective date
+
+    endDate:    Date;       // end effective date
+
     constructor(theRealm: IRealm,
-                theRoleName: string) {
+                theRoleName: string,
+                theStartDate:   ?Date,
+                theEndDate:     ?Date) {
         //
         assert(theRealm, 'realm is required');
         assert(theRoleName, 'role-name is required');
 
         this.realm      = theRealm;
         this.roleName   = theRoleName;
+        this.startDate  = theStartDate || new Date();
+        this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5));
         this.claims     = new UniqueArray();
         this.parents    = new UniqueArray();
     }

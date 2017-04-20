@@ -21,7 +21,11 @@ export interface IRole {
 
     realm:      IRealm;         // realm for the application
 
-    roleName:   string;         // role-name
+    roleName:   string;         // role-name 
+    
+    startDate:  Date;           // start effective date
+        
+    endDate:    Date;           // end effective date
 
     parents:    UniqueArray<IRole>;      // set of claims
 
@@ -91,6 +95,12 @@ export interface IClaim {
      * This is optional for specifying runtime condition
      */
     condition:  string;
+
+    effect:     string;     // This can be allow or deny
+        
+    startDate:  Date;       // start effective date
+            
+    endDate:    Date;       // end effective date
 
     /**
      * This method checks if given action and resource matches internal action and action.

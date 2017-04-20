@@ -11,7 +11,7 @@ import type {RealmRepository}   from '../interface';
 import {QueryOptions}           from '../interface';
 import {Role}                   from '../../domain/role';
 import {PersistenceError}       from '../persistence_error';
-import {DBHelper}               from './db_helper';
+import {DBFactory}              from './db_factory';
 import {QueryHelper}            from './query_helper';
 import type {SecurityCache}     from '../../cache/interface';
 
@@ -20,23 +20,23 @@ import type {SecurityCache}     from '../../cache/interface';
  * access methods for role objects
  */
 export class RoleRepositorySqlite implements RoleRepository {
-    dbHelper:           DBHelper;
+    dbFactory:          DBFactory;
     realmRepository:    RealmRepository;
     claimRepository:    ClaimRepository;
     cache:              SecurityCache;
     sqlPrefix:string;
 
-    constructor(theDBHelper: DBHelper,
+    constructor(theDBFactory: DBFactory,
         theRealmRepository: RealmRepository,
         theClaimRepository: ClaimRepository,
         theCache: SecurityCache) {
         //
-        assert(theDBHelper, 'db-helper not specified');
+        assert(theDBFactory, 'db-helper not specified');
         assert(theRealmRepository, 'realm-repository not specified');
         assert(theClaimRepository, 'claim-repository not specified');
         assert(theCache, 'cache not specified');
         //
-        this.dbHelper           = theDBHelper;
+        this.dbFactory          = theDBFactory;
         this.realmRepository    = theRealmRepository;
         this.claimRepository    = theClaimRepository;
         this.cache              = theCache;
@@ -56,7 +56,7 @@ export class RoleRepositorySqlite implements RoleRepository {
         }
         //
         return new Promise((resolve, reject) => {
-            this.dbHelper.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
+            this.dbFactory.db.get(`${this.sqlPrefix} WHERE rowid == ?`, id, (err, row) => {
                 if (err) {
                     reject(new PersistenceError(`Could not find role with id ${id}`));
                 } else if (row) {
@@ -82,7 +82,7 @@ export class RoleRepositorySqlite implements RoleRepository {
         //
         let realm   = await this.realmRepository.findByName(realmName);
         return new Promise((resolve, reject) => {
-                this.dbHelper.db.get(`${this.sqlPrefix} WHERE realm_id = ? AND role_name == ?`,
+                this.dbFactory.db.get(`${this.sqlPrefix} WHERE realm_id = ? AND role_name == ?`,
                                       realm.id, roleName, (err, row) => {
                     if (err) {
                         reject(new PersistenceError(`Could not find role with name ${roleName}`));
@@ -108,7 +108,7 @@ export class RoleRepositorySqlite implements RoleRepository {
         //
         let savePromise = new Promise((resolve, reject) => {
             if (role.id) {
-                let stmt = this.dbHelper.db.prepare('UPDATE roles SET role_name = ? WHERE rowid = ?');
+                let stmt = this.dbFactory.db.prepare('UPDATE roles SET role_name = ? WHERE rowid = ?');
                 stmt.run(role.roleName, role.realm.id);
                 stmt.finalize(err => {
                     if (err) {
@@ -119,7 +119,7 @@ export class RoleRepositorySqlite implements RoleRepository {
                 });
 
             } else {
-                let stmt = this.dbHelper.db.prepare('INSERT INTO roles VALUES (?, ?)');
+                let stmt = this.dbFactory.db.prepare('INSERT INTO roles VALUES (?, ?)');
                 stmt.run(role.realm.id, role.roleName, function(err) {
                     role.id = this.lastID;
                 });
@@ -152,7 +152,7 @@ export class RoleRepositorySqlite implements RoleRepository {
         parents.forEach(parent => {
             if (parent.id != role.id) {
                 insertPromises.push(new Promise((resolve, reject) => {
-                    this.dbHelper.db.run('INSERT INTO role_parents VALUES(?, ?) ',
+                    this.dbFactory.db.run('INSERT INTO role_parents VALUES(?, ?) ',
                     role.id, parent.id, (err) => {
                         if (err) {
                             reject(new PersistenceError(`Failed to add parent ${String(parent)} to ${String(role)} due to ${err}`));
@@ -187,7 +187,7 @@ export class RoleRepositorySqlite implements RoleRepository {
             parentIds += String(parent.id);
         });
         await new Promise((resolve, reject) => {
-            this.dbHelper.db.run('DELETE FROM role_parents WHERE role_id = ? AND parent_role_id in (?) ',
+            this.dbFactory.db.run('DELETE FROM role_parents WHERE role_id = ? AND parent_role_id in (?) ',
             role.id, parentIds, (err) => {
                     if (err) {
                         reject(new PersistenceError(`Failed to remove parent ${String(parent)} from ${String(role)} due to ${err}`));
@@ -208,7 +208,7 @@ export class RoleRepositorySqlite implements RoleRepository {
         assert(principal && principal.id, 'principal not specified');
         //
         let deletePromise = new Promise((resolve, reject) => {
-            this.dbHelper.db.run('DELETE FROM principals_roles WHERE principal_id = ?',
+            this.dbFactory.db.run('DELETE FROM principals_roles WHERE principal_id = ?',
             principal.id, (err) => {
                     if (err) {
                         reject(new PersistenceError(`Could not remove Role from principal ${String(principal)} due to ${err}`));
@@ -224,8 +224,8 @@ export class RoleRepositorySqlite implements RoleRepository {
         principal.roles.forEach(role => {
             this.cache.remove('role', `id_${role.id}`);
             savePromises.push(new Promise((resolve, reject) => {
-              this.dbHelper.db.run('INSERT INTO principals_roles VALUES (?, ?)',
-                  principal.id, role.id, (err) => {
+              this.dbFactory.db.run('INSERT INTO principals_roles VALUES (?, ?, ?, ?)',
+                  principal.id, role.id, role.startDate.toISOString().split('T')[0], role.endDate.toISOString().split('T')[0], (err) => {
                       if (err) {
                           reject(new PersistenceError(`Could not add Role ${String(role)} to principal ${String(principal)} due to ${err}`));
                       } else {
@@ -249,9 +249,9 @@ export class RoleRepositorySqlite implements RoleRepository {
         //
         this.cache.remove('role', `id_${id}`);
         let promise = new Promise((resolve, reject) => {
-            this.dbHelper.db.run('DELETE FROM principals_roles WHERE role_id = ?', id, (err) => {});
-            this.dbHelper.db.run('DELETE FROM role_parents WHERE role_id = ?', id, (err) => {});
-            this.dbHelper.db.run('DELETE FROM roles WHERE rowid = ?', id, (err) => {
+            this.dbFactory.db.run('DELETE FROM principals_roles WHERE role_id = ?', id, (err) => {});
+            this.dbFactory.db.run('DELETE FROM role_parents WHERE role_id = ?', id, (err) => {});
+            this.dbFactory.db.run('DELETE FROM roles WHERE rowid = ?', id, (err) => {
                 if (err) {
                     reject(new PersistenceError(`Failed to remove role with id ${id} due to ${err}`));
                 } else {
@@ -267,7 +267,7 @@ export class RoleRepositorySqlite implements RoleRepository {
      * This method queries database and returns list of objects
      */
     async search(criteria: Map<string, any>, options?: QueryOptions): Promise<Array<IRole>> {
-        let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
+        let q:QueryHelper<Role> = new QueryHelper(this.dbFactory.db);
         return q.query(this.sqlPrefix, criteria, (row) => {
              return this.__rowToRole(row);
          }, options);
@@ -282,12 +282,13 @@ export class RoleRepositorySqlite implements RoleRepository {
         principal.roles.length = 0;
         let criteria: Map<string, any> = new Map();
         criteria.set('principal_id', principal.id);
-        let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
+        let q:QueryHelper<Role> = new QueryHelper(this.dbFactory.db);
         let claimPromises = [];
 
         await q.query(
-                    'SELECT principal_id, role_id, roles.rowid AS id, role_name, realm_id ' +
-                    'FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id',
+                    "SELECT principal_id, role_id, roles.rowid AS id, role_name, realm_id " +
+                    "FROM principals_roles INNER JOIN roles on roles.rowid = principals_roles.role_id" +
+                    " WHERE date('now') BETWEEN principals_roles.start_date and principals_roles.end_date",
                     criteria, (row) => {
                     return this.__rowToRole(row).
                         then(role => {
@@ -309,11 +310,11 @@ export class RoleRepositorySqlite implements RoleRepository {
         //
         let criteria: Map<string, any> = new Map();
         criteria.set('role_id', role.id);
-        let q:QueryHelper<Role> = new QueryHelper(this.dbHelper.db);
+        let q:QueryHelper<Role> = new QueryHelper(this.dbFactory.db);
         //
         return q.query(
-                'SELECT parent_role_id, role_id, roles.rowid AS id, role_name, realm_id ' +
-                'FROM role_parents INNER JOIN roles on roles.rowid = role_parents.parent_role_id',
+                "SELECT parent_role_id, role_id, roles.rowid AS id, role_name, realm_id " +
+                "FROM role_parents INNER JOIN roles on roles.rowid = role_parents.parent_role_id",
                 criteria, (row) => {
                 return this.__rowToRole(row).then(parent => {
                         role.parents.add(parent);

@@ -19,10 +19,19 @@ export class Claim implements IClaim, UniqueIdentifier {
 
     condition:  string;     // This is optional for specifying runtime condition
 
+    effect:     string;     // This can be allow or deny
+
+    startDate:  Date;       // start effective date
+
+    endDate:    Date;       // end effective date
+
     constructor(theRealm:       IRealm,
                 theAction:      string,
                 theResource:    string,
-                theCondition:   string) {
+                theCondition:   string,
+                theEffect:      ?string,
+                theStartDate:   ?Date,
+                theEndDate:     ?Date) {
         //
         assert(theRealm, 'realm is required');
         assert(theAction, 'action is required');
@@ -32,6 +41,9 @@ export class Claim implements IClaim, UniqueIdentifier {
         this.action     = theAction;
         this.resource   = theResource;
         this.condition  = theCondition;
+        this.effect     = theEffect || 'accept';
+        this.startDate  = theStartDate || new Date();
+        this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 10));
     }
 
     uniqueKey(): string {

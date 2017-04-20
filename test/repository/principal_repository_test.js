@@ -11,7 +11,7 @@ import {RealmRepositorySqlite}      from '../../src/repository/sqlite/realm_repo
 import {ClaimRepositorySqlite}      from '../../src/repository/sqlite/claim_repository';
 import {RoleRepositorySqlite}       from '../../src/repository/sqlite/role_repository';
 import {PrincipalRepositorySqlite}  from '../../src/repository/sqlite/principal_repository';
-import {DBHelper}                   from '../../src/repository/sqlite/db_helper';
+import {DBFactory}                  from '../../src/repository/sqlite/db_factory';
 import {QueryOptions}               from '../../src/repository/interface';
 import {Claim}                      from '../../src/domain/claim';
 import {Realm}                      from '../../src/domain/realm';
@@ -22,32 +22,32 @@ import {DefaultSecurityCache}       from '../../src/cache/security_cache';
 
 
 describe('PrincipalRepository', function() {
-  let dbHelper:             DBHelper;
+  let dbFactory:            DBFactory;
   let claimRepository:      ClaimRepositorySqlite;
   let realmRepository:      RealmRepositorySqlite;
   let roleRepository:       RoleRepositorySqlite;
   let principalRepository:  PrincipalRepositorySqlite;
 
   before(function(done) {
-    this.dbHelper = new DBHelper(':memory:');
-    //this.dbHelper = new DBHelper('/tmp/test.db');
-    this.dbHelper.db.on('trace', function(trace){
+    this.dbFactory = new DBFactory(':memory:');
+    //this.dbFactory = new DBFactory('/tmp/test.db');
+    this.dbFactory.db.on('trace', function(trace){
         //console.log(`trace ${trace}`);
     })
     //
-    this.realmRepository     = new RealmRepositorySqlite(this.dbHelper, new DefaultSecurityCache());
-    this.claimRepository     = new ClaimRepositorySqlite(this.dbHelper, this.realmRepository);
-    this.roleRepository      = new RoleRepositorySqlite(this.dbHelper, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
-    this.principalRepository = new PrincipalRepositorySqlite(this.dbHelper, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
+    this.realmRepository     = new RealmRepositorySqlite(this.dbFactory, new DefaultSecurityCache());
+    this.claimRepository     = new ClaimRepositorySqlite(this.dbFactory, this.realmRepository);
+    this.roleRepository      = new RoleRepositorySqlite(this.dbFactory, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
+    this.principalRepository = new PrincipalRepositorySqlite(this.dbFactory, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
 
     //
-    this.dbHelper.createTables(() => {
+    this.dbFactory.createTables(() => {
       done();
     });
   });
 
   after(function(done) {
-    this.dbHelper.close();
+    this.dbFactory.close();
     done();
   });
 

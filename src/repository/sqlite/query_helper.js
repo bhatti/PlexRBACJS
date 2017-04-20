@@ -19,17 +19,17 @@ export class QueryHelper<T> {
         mapper: (row: any) => T,
         options: ?QueryOptions = null): Array<T> {
         //
-        var query = criteria.size > 0 ? prefixQuery + ' WHERE 1=1' : prefixQuery;
+        var query = criteria.size > 0 && !prefixQuery.includes('WHERE') ? prefixQuery + ' WHERE 1=1' : prefixQuery;
         var params = [];
         criteria.forEach((v, k) => {
             query += ` AND ${k} = ?`;
             params.push(v);
         });
         //
-        //console.log(`----querying ${JSON.stringify(params)} using ${query}`);
 
         return new Promise((resolve, reject) => {
             this.db.all(query, params, (err, rows) => {
+                //console.log(`----querying ${JSON.stringify(params)} using ${query} returned ${rows.length} --- ${err}`);
                 if (err) {
                     reject(err);
                 } else if (rows && rows.length > 0) {
