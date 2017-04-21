@@ -128,14 +128,10 @@ export interface RoleRepository extends Repository<IRole> {
     __loadPrincipalRoles(principal: IPrincipal): Promise<IPrincipal>;
 
    /**
-     * This method adds set of roles as parent
+     * This method save set of roles as parent
      */
-    addParentsToRole(role: IRole, parents: Array<IRole>): Promise<IRole>;
+    __saveRoleParents(role: IRole): Promise<IRole>;
 
-    /**
-     * This method remove set of roles as parent
-     */
-    removeParentsFromRole(role: IRole, parents: Array<IRole>): Promise<IRole>;
 }
 
 /**

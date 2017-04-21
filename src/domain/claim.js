@@ -43,7 +43,7 @@ export class Claim implements IClaim, UniqueIdentifier {
         this.condition  = theCondition;
         this.effect     = theEffect || 'accept';
         this.startDate  = theStartDate || new Date();
-        this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 10));
+        this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5));
     }
 
     uniqueKey(): string {

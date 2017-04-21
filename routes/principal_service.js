@@ -30,7 +30,7 @@ server.post('/realms/:realm_id/principals', function(req, res, next) {
         json.claims.forEach(claim => principal.claims.add(claim));
         json.roles.forEach(claim => principal.roles.add(role));
         //
-        let saved = await server.principalRepository.save(principal);
+        let saved = await server.repositoryLocator.principalRepository.save(principal);
         res.send(201, saved);
         next();
     } catch (err) {
@@ -48,7 +48,7 @@ server.get('/realms/:realm_id/principals', function(req, res, next) {
 
     let criteria    = new Map();
     criteria.set('realm_id', Number.parseInt(req.params.realmId));
-    let results = await server.principalsRepository.search(criteria);
+    let results = await server.repositoryLocator.principalsRepository.search(criteria);
     res.send(results);
     next();
 
@@ -61,7 +61,7 @@ server.get('/realms/:realm_id/principals', function(req, res, next) {
 server.get('/realms/:realm_id/principals/:principalId', function(req, res, next) {
 
 	try {
-    	let realm = await server.principalRepository.findById(req.params.principalId);
+    	let realm = await server.repositoryLocator.principalRepository.findById(req.params.principalId);
         res.send(realm);
         next();
 	} catch (err) {
@@ -97,7 +97,7 @@ server.put('/realms/:realm_id/principals/:principalId', function(req, res, next)
         json.claims.forEach(claim => principal.claims.add(claim));
         json.roles.forEach(claim => principal.roles.add(role));
         //
-        let saved = await server.principalRepository.save(principal);
+        let saved = await server.repositoryLocator.principalRepository.save(principal);
 		res.send(200, saved)
         next();
     } catch (err) {
@@ -113,7 +113,7 @@ server.put('/realms/:realm_id/principals/:principalId', function(req, res, next)
 server.del('/realms/:realm_id/principals/:principalId', function(req, res, next) {
 
 	try {
-    	await server.principalRepository.removeById(req.params.principalId);
+    	await server.repositoryLocator.principalRepository.removeById(req.params.principalId);
 		res.send(204)
         next();
 	} catch (err) {
@@ -122,5 +122,3 @@ server.del('/realms/:realm_id/principals/:principalId', function(req, res, next)
 	}
 
 })
-
-

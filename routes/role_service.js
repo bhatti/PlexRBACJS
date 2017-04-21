@@ -35,7 +35,7 @@ server.post('/realms/:realmId/roles', function(req, res, next) {
         let role  = new Role(realm, json.realmName);
         json.claims.forEach(claim => role.claims.add(claim));
         //
-        let saved = await server.roleRepository.save(role);
+        let saved = await server.repositoryLocator.roleRepository.save(role);
         res.send(201, saved);
         next();
     } catch (err) {
@@ -53,7 +53,7 @@ server.get('/realms/:realmId/roles', function(req, res, next) {
 
     let criteria    = new Map();
     criteria.set('realm_id', Number.parseInt(req.params.realmId));
-    let results = await server.roleRepository.search(criteria);
+    let results = await server.repositoryLocator.roleRepository.search(criteria);
     res.send(results);
     next();
 
@@ -66,7 +66,7 @@ server.get('/realms/:realmId/roles', function(req, res, next) {
 server.get('/realms/:realmId/roles/:roleId', function(req, res, next) {
 
 	try {
-    	let realm = await server.roleRepository.findById(req.params.roleId);
+    	let realm = await server.repositoryLocator.roleRepository.findById(req.params.roleId);
         res.send(realm);
         next();
 	} catch (err) {
@@ -102,7 +102,7 @@ server.put('/realms/:realmId/roles/:roleId', function(req, res, next) {
         role.id   = json.id;
         json.claims.forEach(claim => role.claims.add(claim));
         //
-        let saved = await server.roleRepository.save(role);
+        let saved = await server.repositoryLocator.roleRepository.save(role);
 		res.send(200, saved)
         next();
     } catch (err) {
@@ -118,7 +118,7 @@ server.put('/realms/:realmId/roles/:roleId', function(req, res, next) {
 server.del('/:realmId/roles/:roleId', function(req, res, next) {
 
 	try {
-    	let realm = await server.roleRepository.removeById(req.params.roleId);
+    	let realm = await server.repositoryLocator.roleRepository.removeById(req.params.roleId);
 		res.send(204)
         next();
 	} catch (err) {

@@ -1,12 +1,6 @@
 'use strict'
 
-import {RealmRepositorySqlite}      from './src/repository/sqlite/realm_repository';
-import {ClaimRepositorySqlite}      from './src/repository/sqlite/claim_repository';
-import {RoleRepositorySqlite}       from './src/repository/sqlite/role_repository';
-import {PrincipalRepositorySqlite}  from './src/repository/sqlite/principal_repository';
-import {DBHelper}                   from './src/repository/sqlite/db_helper';
-import {DefaultSecurityCache}       from './src/cache/security_cache';
-
+import {RepositoryLocator}          from './src/repository/sqlite/repository_locator';
 
 /**
  * Module Dependencies
@@ -61,15 +55,7 @@ server.on('uncaughtException', (req, res, route, err) => {
  * Lift Server, Connect to DB & Bind Routes
  */
 server.listen(config.port, () => {
-    server.dbHelper 		= new DBHelper('/tmp/test.db');
-    server.realmRepository  = new RealmRepositorySqlite(server.dbHelper, new DefaultSecurityCache());
-    server.claimRepository  = new ClaimRepositorySqlite(server.dbHelper, server.realmRepository);
-    server.roleRepository   = new RoleRepositorySqlite(server.dbHelper, server.realmRepository, server.claimRepository, new DefaultSecurityCache());
-    server.principalRepository = new PrincipalRepositorySqlite(server.dbHelper, server.realmRepository, server.roleRepository, server.claimRepository, new DefaultSecurityCache());
-
-    //
-    server.dbHelper.createTables(() => { });
-
+    server.repositoryLocator = new RepositoryLocator('sqlite', '/tmp/test.db', () => {});
 	//
     require('./routes/realm_service');
     require('./routes/role_service');

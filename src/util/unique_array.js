@@ -15,7 +15,7 @@ export class UniqueArray<T> extends Array<T> {
 
     add(object: T) {
         let key = (object.uniqueKey) ? object.uniqueKey() : object.toString();
-        let ndx = this.lookup(key);
+        let ndx = this.lookupMap.get(key);
         //
         if (ndx === undefined) {
             this.push(object);
@@ -25,7 +25,7 @@ export class UniqueArray<T> extends Array<T> {
 
     delete(object: T) {
         let key = (object.uniqueKey) ? object.uniqueKey() : object.toString();
-        let ndx = this.lookup(key);
+        let ndx = this.lookupMap.get(key);
         //
         if (ndx !== undefined) {
             this.splice(ndx, 1);
@@ -33,12 +33,13 @@ export class UniqueArray<T> extends Array<T> {
         this.lookupMap.delete(key);
     }
 
-    lookup(key: string) {
+    exists(object: T) {
+        let key = (object.uniqueKey) ? object.uniqueKey() : object.toString();
         let ndx = this.lookupMap.get(key);
-        return ndx;
+        return (ndx !== undefined);
     }
 }
 
 Array.prototype.add = UniqueArray.prototype.add;
 Array.prototype.delete = UniqueArray.prototype.delete;
-Array.prototype.lookup = UniqueArray.prototype.lookup;
+Array.prototype.exists = UniqueArray.prototype.exists;

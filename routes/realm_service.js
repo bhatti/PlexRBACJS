@@ -24,7 +24,7 @@ server.post('/realms', async (req, res, next) => {
 	//
     try {
         let realm = new Realm(json.realmName);
-        let saved = await server.realmRepository.save(realm);
+        let saved = await server.repositoryLocator.realmRepository.save(realm);
         res.send(201);
         next();
     } catch (err) {
@@ -40,7 +40,7 @@ server.post('/realms', async (req, res, next) => {
 server.get('/realms', async (req, res, next) => {
 
     let criteria    = new Map();
-    let results = await server.realmRepository.search(criteria);
+    let results = await server.repositoryLocator.realmRepository.search(criteria);
     res.send(results);
     next();
 
@@ -53,7 +53,7 @@ server.get('/realms', async (req, res, next) => {
 server.get('/realms/:realmId', async (req, res, next) => {
 
 	try {
-    	let realm = await server.realmRepository.findById(req.params.realmId);
+    	let realm = await server.repositoryLocator.realmRepository.findById(req.params.realmId);
         res.send(realm);
         next();
 	} catch (err) {

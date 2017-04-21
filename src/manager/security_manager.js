@@ -1,9 +1,14 @@
 /* @flow */
 import type {ISecurityManager}      from './interface';
 import type {IConditionEvaluator}   from '../expr/interface';
+import type {RealmRepository}       from '../repository/interface';
+import type {ClaimRepository}       from '../repository/interface';
+import type {PrincipalRepository}   from '../repository/interface';
+import type {RoleRepository}        from '../repository/interface';
+//
+import {RepositoryLocator}          from '../repository/repository_locator';
 import {SecurityAccessRequest}      from '../domain/security_access_request';
 import {AuthorizationError}         from '../domain/auth_error';
-import type {ISecurityService}      from '../service/interface';
 
 /**
  * SecurityManager implements ISecurityManager and checks if
@@ -11,11 +16,11 @@ import type {ISecurityService}      from '../service/interface';
  */
 class SecurityManager implements ISecurityManager {
     conditionEvaluator: IConditionEvaluator;
-    securityService:    ISecurityService;
+    repositoryLocator: RepositoryLocator;
 
-    constructor(theConditionEvaluator: IConditionEvaluator, theSecurityService: ISecurityService) {
+    constructor(theConditionEvaluator: IConditionEvaluator, theRepositoryLocator: RepositoryLocator) {
         this.conditionEvaluator = theConditionEvaluator;
-        this.securityService = theSecurityService;
+        this.repositoryLocator = theRepositoryLocator;
     }
 
     /**
@@ -26,7 +31,7 @@ class SecurityManager implements ISecurityManager {
      */
     async check(request: SecurityAccessRequest): Promise<boolean> {
         try {
-            let principal = await this.securityService.getPrincipal(request.realmName, request.principalName);
+            let principal = await this.repositoryLocator.principalRepository.findByName(request.realmName, request.principalName);
             let allClaims = principal.allClaims();
             allClaims.forEach(claim => {
                 if (claim.implies(request.action, request.resource)) {
