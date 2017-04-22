@@ -2,75 +2,77 @@
 
 import type {IClaim, IRealm}    from './interface';
 import type {UniqueIdentifier}  from '../util/unique_id';
+import {ClaimEffects}           from './interface';
 
 const assert = require('assert');
+
 
 /**
  * Claim implements IClaim for defining access attributes
  */
 export class Claim implements IClaim, UniqueIdentifier {
-    id:         number;     // unique database id
+	id:         number;     // unique database id
 
-    realm:      IRealm;     // realm for the application
+	realm:      IRealm;     // realm for the application
 
-    action:     string;     // This can be a single operation or regex based multiple operations
+	action:     string;     // This can be a single operation or regex based multiple operations
 
-    resource:   string;     // target resource
+	resource:   string;     // target resource
 
-    condition:  string;     // This is optional for specifying runtime condition
+	condition:  string;     // This is optional for specifying runtime condition
 
-    effect:     string;     // This can be allow or deny
+	effect:     ClaimEffects;     // This can be allow or deny
 
-    startDate:  Date;       // start effective date
+	startDate:  Date;       // start effective date
 
-    endDate:    Date;       // end effective date
+	endDate:    Date;       // end effective date
 
-    constructor(theRealm:       IRealm,
-                theAction:      string,
-                theResource:    string,
-                theCondition:   string,
-                theEffect:      ?string,
-                theStartDate:   ?Date,
-                theEndDate:     ?Date) {
-        //
-        assert(theRealm, 'realm is required');
-        assert(theAction, 'action is required');
-        assert(theResource, 'resource is required');
-        //
-        this.realm      = theRealm;
-        this.action     = theAction;
-        this.resource   = theResource;
-        this.condition  = theCondition;
-        this.effect     = theEffect || 'accept';
-        this.startDate  = theStartDate || new Date();
-        this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5));
-    }
+	constructor(theRealm:       IRealm,
+				theAction:      string,
+				theResource:    string,
+				theCondition:   string,
+				theEffect:      ?string,
+				theStartDate:   ?Date,
+				theEndDate:     ?Date) {
+		//
+		assert(theRealm, 'realm is required');
+		assert(theAction, 'action is required');
+		assert(theResource, 'resource is required');
+		//
+		this.realm      = theRealm;
+		this.action     = theAction;
+		this.resource   = theResource;
+		this.condition  = theCondition;
+		this.effect     = ClaimEffects.valueOf(theEffect || ClaimEffects.allow.value);
+		this.startDate  = theStartDate || new Date();
+		this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5));
+	}
 
-    uniqueKey(): string {
-        return `${this.realm.realmName}_${this.action}_${this.resource}_${this.condition}`;
-    }
+	uniqueKey(): string {
+		return `${this.realm.realmName}_${this.action}_${this.resource}_${this.condition}`;
+	}
 
-    hasCondition(): boolean {
-        return this.condition != null && this.condition != undefined && this.condition.length > 0;
-    }
+	hasCondition(): boolean {
+		return this.condition != null && this.condition != undefined && this.condition.length > 0;
+	}
 
-    /**
-     * This method checks if given action and resource matches internal action and action.
-     * It tries to compare action and resource directly or using regex
-     *
-     * @param {*} action
-     * @param {*} resource
-     */
-    implies(theAction: string, theResource: string): boolean {
-         return (this.action == theAction ||
-            theAction.match(this.action) != null) &&
-            (this.resource == theResource || theResource.match(this.resource) != null);
-    }
+	/**
+	 * This method checks if given action and resource matches internal action and action.
+	 * It tries to compare action and resource directly or using regex
+	 *
+	 * @param {*} action
+	 * @param {*} resource
+	 */
+	implies(theAction: string, theResource: string): boolean {
+		 return (this.action == theAction ||
+			theAction.match(this.action) != null) &&
+			this.resource == theResource;
+	}
 
-    /**
-     * returns textual representation
-     */
-    toString() {
-        return `(${String(this.realm)}, ${this.action}, ${this.resource}, ${this.condition})`;
-    }
+	/**
+	 * returns textual representation
+	 */
+	toString() {
+		return `(${String(this.realm)}, ${this.action}, ${this.resource}, ${this.condition})`;
+	}
 }

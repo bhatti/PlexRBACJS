@@ -1,7 +1,8 @@
 /*@flow*/
 
 import type {IConditionEvaluator}   from './interface';
-import Parser                       from 'morph-expressions';
+//import Parser                       from 'morph-expressions';
+const jexl = require('Jexl');
 
 /**
  * Default implementation of ConditionEvaluator using morph-expressions 
@@ -10,10 +11,10 @@ import Parser                       from 'morph-expressions';
 // https://github.com/TechnologyAdvice/Jexl
 // https://github.com/abukurov/morph-expressions
 export class ConditionEvaluator implements IConditionEvaluator {
-    parser: Parser;
+    //parser: Parser;
 
     constructor() {
-        this.parser = new Parser();
+        //this.parser = new Parser();
 
     }
     /**
@@ -23,7 +24,12 @@ export class ConditionEvaluator implements IConditionEvaluator {
      * @param {*} context - this stores context with dynamic variables 
      * are used to evaluate the condition.
      */
-    evaluate(condition: string, context: Map<string, any>): boolean {
+    async evaluate(condition: string, context: Map<string, any>): Promise<boolean> {
+        const resp = await jexl.eval(condition, context);
+        return resp != null && resp != undefined && resp != 0 && resp != false && resp != 'false';
+    }
+
+    _evaluate(condition: string, context: Map<string, any>): boolean {
         const resp = this.parser.parseAndEval(condition, context)
         return resp != null && resp != undefined && resp != 0 && resp != false && resp != 'false';
     }

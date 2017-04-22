@@ -12,5 +12,5 @@ export interface IConditionEvaluator {
      * @param {*} context - this stores context with dynamic variables 
      * are used to evaluate the condition.
      */
-    evaluate(condition: string, context: Map<string, any>): boolean;
+    evaluate(condition: string, context: Map<string, any>): Promise<boolean>;
 }

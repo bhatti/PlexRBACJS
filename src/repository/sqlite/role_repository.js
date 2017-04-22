@@ -111,7 +111,7 @@ export class RoleRepositorySqlite implements RoleRepository {
 		let loaded = null;
 		if (!role.id && role.realm.realmName) {
 			try {
-				loaded = await findByName(role.realm.realmName, role.roleName);
+				loaded = await this.findByName(role.realm.realmName, role.roleName);
 				if (loaded) {
 					role.id = loaded.id;
 				}
