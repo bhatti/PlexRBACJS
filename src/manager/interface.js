@@ -1,6 +1,6 @@
 /* @flow Interface file */
 import {SecurityAccessRequest}      from '../domain/security_access_request';
-import {ClaimEffects}               from '../domain/interface';
+import type {ClaimEffects}          from '../domain/interface';
 
 
 /**

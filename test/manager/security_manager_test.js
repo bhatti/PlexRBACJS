@@ -12,7 +12,6 @@ import {Realm}                      from '../../src/domain/realm';
 import {Role}                       from '../../src/domain/role';
 import {Principal}                  from '../../src/domain/principal';
 import {SecurityAccessRequest}      from '../../src/domain/security_access_request';
-import {ClaimEffects}               from '../../src/domain/interface';
 import {SecurityManager}            from '../../src/manager/security_manager';
 
 
@@ -48,14 +47,22 @@ describe('SecurityManager', function() {
 
 		this.securityManager   = new SecurityManager(conditionEvaluator, this.repositoryLocator);
 		//
-		this.realm             = await this.repositoryLocator.realmRepository.save(new Realm('banking'));
-		this.ruDeposit         = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, '(read|modify)', 'DepositAccount', 'employeeRegion == "MIDWEST"'));
-		this.cdDeposit         = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, '(create|delete)', 'DepositAccount', 'employeeRegion == "MIDWEST"'));
-		this.cdLoan            = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, '(create|delete)', 'LoanAccount', 'accountBalance < 10000'));
-		this.ruLoan            = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, '(read|modify)', 'LoanAccount', 'accountBalance < 10000'));
-		this.rdLedger          = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, '(read|create)', 'GeneralLedger', 'transactionDateYear == currentYear'));
-		this.rGlpr             = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, 'read', 'GeneralLedgerPostingRules', 'transactionDateYear == currentYear'));
-		this.cudGlpr           = await this.repositoryLocator.claimRepository.save(new Claim(this.realm, '(create|modify|delete)', 'GeneralLedgerPostingRules', 'transactionDateYear == currentYear'));
+		this.realm             = await this.repositoryLocator.realmRepository.save(
+            new Realm('banking'));
+		this.ruDeposit         = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, '(read|modify)', 'DepositAccount', 'employeeRegion == "MIDWEST"'));
+		this.cdDeposit         = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, '(create|delete)', 'DepositAccount', 'employeeRegion == "MIDWEST"'));
+		this.cdLoan            = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, '(create|delete)', 'LoanAccount', 'accountBalance < 10000'));
+		this.ruLoan            = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, '(read|modify)', 'LoanAccount', 'accountBalance < 10000'));
+		this.rdLedger          = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, '(read|create)', 'GeneralLedger', 'transactionDateYear == currentYear'));
+		this.rGlpr             = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, 'read', 'GeneralLedgerPostingRules', 'transactionDateYear == currentYear'));
+		this.cudGlpr           = await this.repositoryLocator.claimRepository.save(
+            new Claim(this.realm, '(create|modify|delete)', 'GeneralLedgerPostingRules', 'transactionDateYear == currentYear'));
 
 		this.employee          = new Role(this.realm, 'Employee');
 		this.teller            = new Role(this.realm, 'Teller');
@@ -101,7 +108,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "EAST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -117,7 +124,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "EAST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -132,7 +139,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "MIDWEST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -147,7 +154,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "EAST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -162,7 +169,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "MIDWEST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -178,7 +185,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "EAST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -193,7 +200,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "EAST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -208,7 +215,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "MIDWEST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -223,7 +230,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "MIDWEST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -238,7 +245,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "EAST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -253,7 +260,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "MIDWEST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -271,7 +278,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -287,7 +294,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -303,7 +310,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -318,7 +325,7 @@ describe('SecurityManager', function() {
 					"employeeRegion": "MIDWEST"
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -333,7 +340,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 10001
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -348,7 +355,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 9999
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -364,7 +371,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 9999
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 	describe('#check', function() {
@@ -378,7 +385,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 9999
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 	describe('#check', function() {
@@ -392,7 +399,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 9999
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 	describe('#check', function() {
@@ -407,7 +414,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -423,7 +430,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.defaultDeny, access);
+			assert.equal(Claim.defaultDeny, access);
 		});
 	});
 
@@ -440,7 +447,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 10001
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -457,7 +464,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 10001
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -474,7 +481,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 10001
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 	describe('#check', function() {
@@ -490,7 +497,7 @@ describe('SecurityManager', function() {
 					"accountBalance": 10001
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 	describe('#check', function() {
@@ -505,7 +512,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 	describe('#check', function() {
@@ -520,7 +527,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -537,7 +544,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 
@@ -554,7 +561,7 @@ describe('SecurityManager', function() {
 					"currentYear": new Date().getFullYear()
 				});
 			let access = await this.securityManager.check(request)
-			assert.equal(ClaimEffects.allow, access);
+			assert.equal(Claim.allow, access);
 		});
 	});
 

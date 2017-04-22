@@ -104,14 +104,14 @@ export class RoleRepositorySqlite implements RoleRepository {
 	 */
 	async save(role: IRole): Promise<IRole> {
 		assert(role, 'role not specified');
-		assert(role.realm && role.realm.id, 'realm not specified');
+		assert(role.realm() && role.realm().id, 'realm not specified');
 		this.cache.remove('role', `id_${role.id}`);
 
 		//
 		let loaded = null;
-		if (!role.id && role.realm.realmName) {
+		if (!role.id && role.realm().realmName) {
 			try {
-				loaded = await this.findByName(role.realm.realmName, role.roleName);
+				loaded = await this.findByName(role.realm().realmName, role.roleName);
 				if (loaded) {
 					role.id = loaded.id;
 				}
@@ -124,7 +124,7 @@ export class RoleRepositorySqlite implements RoleRepository {
 			if (role.id) {
 				if (loaded && loaded.roleName !== role.roleName) {
 					let stmt = this.dbFactory.db.prepare('UPDATE roles SET role_name = ? WHERE rowid = ?');
-					stmt.run(role.roleName, role.realm.id);
+					stmt.run(role.roleName, role.realm().id);
 					stmt.finalize(err => {
 						if (err) {
 							reject(new PersistenceError(`Could not save role ${String(role)} due to ${err}`));
@@ -137,7 +137,7 @@ export class RoleRepositorySqlite implements RoleRepository {
 				}
 			} else {
 				let stmt = this.dbFactory.db.prepare('INSERT INTO roles VALUES (?, ?)');
-				stmt.run(role.realm.id, role.roleName, function(err) {
+				stmt.run(role.realm().id, role.roleName, function(err) {
 					role.id = this.lastID;
 				});
 				stmt.finalize((err) => {
@@ -161,12 +161,12 @@ export class RoleRepositorySqlite implements RoleRepository {
 	 */
 	async __saveRoleParents(role: IRole): Promise<IRole> {
 		assert(role, 'role not specified');
-		assert(role.realm && role.realm.id, 'realm not specified');
+		assert(role.realm() && role.realm().id, 'realm not specified');
 
 		let savePromises = [];
 		role.parents.forEach(parent => {
 			if (!parent.id) {
-				this.save(parent);
+				savePromises.push(this.save(parent));
 			}
 		});
 		await Promise.all(savePromises);
@@ -229,7 +229,7 @@ export class RoleRepositorySqlite implements RoleRepository {
 			this.cache.remove('role', `id_${role.id}`);
 			savePromises.push(new Promise((resolve, reject) => {
 			  this.dbFactory.db.run('INSERT INTO principals_roles VALUES (?, ?, ?, ?)',
-				  principal.id, role.id, role.startDate.toISOString().split('T')[0], role.endDate.toISOString().split('T')[0], (err) => {
+				  principal.id, role.id, role.startDate(), role.endDate(), (err) => {
 					  if (err) {
 						  reject(new PersistenceError(`Could not add Role ${String(role)} to principal ${String(principal)} due to ${err}`));
 					  } else {

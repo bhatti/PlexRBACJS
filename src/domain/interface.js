@@ -3,15 +3,7 @@
 import {UniqueArray}        from '../util/unique_array';
 import {Enum}               from '../util/enum';
 
-export class ClaimEffects extends Enum {
-	static allow        = new ClaimEffects('allow');
-	static deny         = new ClaimEffects('deny');
-	static defaultDeny  = new ClaimEffects('defaultDeny');
-	allows(): boolean {
-		return this == ClaimEffects.allow;
-	}
-}
-
+export type ClaimEffects = 'allow' | 'deny' | 'defaultDeny';
 
 
 /**
@@ -31,17 +23,27 @@ export interface IRealm {
 export interface IRole {
 	id:         number;         // unique database id
 
-	realm:      IRealm;         // realm for the application
-
 	roleName:   string;         // role-name
-
-	startDate:  Date;           // start effective date
-
-	endDate:    Date;           // end effective date
 
 	parents:    UniqueArray<IRole>;      // set of claims
 
 	claims:     UniqueArray<IClaim>;     // set of claims
+
+	/**
+	 * This method returns relam for role
+	 */
+	realm(): IRealm;
+
+	/**
+	 * This method returns start-date when role is assigned
+	 */
+	startDate(): Date;
+
+	/**
+	 * This method returns end-date when role is assigned
+	 */
+	endDate(): Date;
+
 }
 
 /**
@@ -53,11 +55,6 @@ export interface IPrincipal {
 	 * Unique database id
 	 */
 	id:             number;
-
-	/**
-	 * realm for the application
-	 */
-	realm:          IRealm;
 
 	/**
 	 * principal name such as username
@@ -74,7 +71,16 @@ export interface IPrincipal {
 	 */
 	roles:          UniqueArray<IRole>;
 
+	/**
+	 * This method returns all claims including roles
+	 */
 	allClaims():    UniqueArray<IClaim>;
+
+	/**
+	 * This method returns relam for principal
+	 */
+	realm(): IRealm;
+
 }
 
 /**
@@ -87,11 +93,6 @@ export interface IClaim {
 	 * Unique database id
 	 */
 	id:         number;
-
-	/**
-	 * realm for the application
-	 */
-	realm:      IRealm;
 
 	/**
 	 * This can be a single operation or regex based multiple operations
@@ -108,11 +109,10 @@ export interface IClaim {
 	 */
 	condition:  string;
 
-	effect:     ClaimEffects;     // This can be allow or deny
-
-	startDate:  Date;       // start effective date
-
-	endDate:    Date;       // end effective date
+	/**
+	 * This is optional for specifying effect and can be allow or deny
+	 */
+	effect: ClaimEffects;
 
 	/**
 	 * This method checks if given action and resource matches internal action and action.
@@ -127,4 +127,19 @@ export interface IClaim {
 	 * This method returns true if condition is valid expression
 	 */
 	hasCondition(): boolean;
+
+	/**
+	 * This method returns relam for Claim
+	 */
+	realm(): IRealm;
+
+	/**
+	 * This method returns start-date when claim is assigned
+	 */
+	startDate(): Date;
+
+	/**
+	 * This method returns end-date when claim is assigned
+	 */
+	endDate(): Date;
 }

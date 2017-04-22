@@ -9,7 +9,8 @@ import type {RoleRepository}        from '../repository/interface';
 import {RepositoryLocator}          from '../repository/repository_locator';
 import {SecurityAccessRequest}      from '../domain/security_access_request';
 import {AuthorizationError}         from '../domain/auth_error';
-import {ClaimEffects}               from '../domain/interface';
+import type {ClaimEffects}          from '../domain/interface';
+import {Claim}                      from '../domain/claim';
 
 /**
  * SecurityManager implements ISecurityManager and checks if
@@ -34,7 +35,7 @@ export class SecurityManager implements ISecurityManager {
 		try {
 			let principal = await this.repositoryLocator.principalRepository.findByName(request.realmName, request.principalName);
 			let allClaims = principal.allClaims();
-			let effect = ClaimEffects.defaultDeny;
+			let effect = Claim.defaultDeny;
 			//console.log(`Checking claims for ${principal.principalName} - ${allClaims}`);
 			let promises = [];
 			allClaims.forEach(async claim => {

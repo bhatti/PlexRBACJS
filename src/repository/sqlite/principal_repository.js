@@ -102,12 +102,12 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 	 */
 	async save(principal: IPrincipal): Promise<IPrincipal> {
 		assert(principal, 'principal not specified');
-		assert(principal.realm && principal.realm.id, 'realm-id not specified');
+		assert(principal.realm && principal.realm().id, 'realm-id not specified');
 
 		let loaded = null;
-		if (!principal.id && principal.realm.realmName) {
+		if (!principal.id && principal.realm().realmName) {
 			try {
-				loaded = await this.findByName(principal.realm.realmName, principal.principalName);
+				loaded = await this.findByName(principal.realm().realmName, principal.principalName);
 				if (loaded) {
 					principal.id = loaded.id;
 				}
@@ -119,7 +119,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 			if (principal.id) {
 				if (loaded && loaded.principalName !== principal.principalName) {
 					let stmt = this.dbFactory.db.prepare('UPDATE principals SET principal_name = ? WHERE rowid = ?');
-					stmt.run(principal.principalName, principal.realm.id);
+					stmt.run(principal.principalName, principal.realm().id);
 					stmt.finalize(err => {
 						if (err) {
 							reject(new PersistenceError(`Could not save principal ${String(principal)} due to ${err}`));
@@ -132,7 +132,7 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
 				}
 			} else {
 				let stmt = this.dbFactory.db.prepare('INSERT INTO principals VALUES (?, ?)');
-				stmt.run(principal.realm.id, principal.principalName, function(err) {
+				stmt.run(principal.realm().id, principal.principalName, function(err) {
 					principal.id = this.lastID;
 				});
 				stmt.finalize(() => {

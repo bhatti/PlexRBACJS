@@ -1,19 +1,24 @@
 /*@flow*/
 
-import type {IClaim, IRealm}    from './interface';
+import type {IClaim, IRealm, ClaimEffects}    from './interface';
 import type {UniqueIdentifier}  from '../util/unique_id';
-import {ClaimEffects}           from './interface';
 
-const assert = require('assert');
+const assert        = require('assert');
 
+const _realm        = Symbol('realm');
+const _startDate    = Symbol('startDate');
+const _endDate      = Symbol('endDate');
+const _effect       = Symbol('effect');
 
 /**
  * Claim implements IClaim for defining access attributes
  */
 export class Claim implements IClaim, UniqueIdentifier {
-	id:         number;     // unique database id
+	static allow        = 'allow';
+	static deny         = 'deny';
+	static defaultDeny  = 'defaultDeny';
 
-	realm:      IRealm;     // realm for the application
+	id:         number;     // unique database id
 
 	action:     string;     // This can be a single operation or regex based multiple operations
 
@@ -21,17 +26,13 @@ export class Claim implements IClaim, UniqueIdentifier {
 
 	condition:  string;     // This is optional for specifying runtime condition
 
-	effect:     ClaimEffects;     // This can be allow or deny
-
-	startDate:  Date;       // start effective date
-
-	endDate:    Date;       // end effective date
+	effect: ClaimEffects;   // This is optional for specifying allow/deny
 
 	constructor(theRealm:       IRealm,
 				theAction:      string,
 				theResource:    string,
 				theCondition:   string,
-				theEffect:      ?string,
+				theEffect:      ?ClaimEffects,
 				theStartDate:   ?Date,
 				theEndDate:     ?Date) {
 		//
@@ -39,21 +40,33 @@ export class Claim implements IClaim, UniqueIdentifier {
 		assert(theAction, 'action is required');
 		assert(theResource, 'resource is required');
 		//
-		this.realm      = theRealm;
 		this.action     = theAction;
 		this.resource   = theResource;
 		this.condition  = theCondition;
-		this.effect     = ClaimEffects.valueOf(theEffect || ClaimEffects.allow.value);
-		this.startDate  = theStartDate || new Date();
-		this.endDate    = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5));
+		this.effect     = theEffect || Claim.allow;
+		(this: any)[_realm]       = theRealm;
+		(this: any)[_startDate]   = theStartDate || new Date();
+		(this: any)[_endDate]     = theEndDate || new Date(new Date().setFullYear(new Date().getFullYear() + 5));
 	}
 
 	uniqueKey(): string {
-		return `${this.realm.realmName}_${this.action}_${this.resource}_${this.condition}`;
+		return `${this.realm().realmName}_${this.action}_${this.resource}_${this.condition}`;
 	}
 
 	hasCondition(): boolean {
 		return this.condition != null && this.condition != undefined && this.condition.length > 0;
+	}
+
+	realm(): IRealm {
+		return (this: any)[_realm];
+	}
+
+	startDate(): Date {
+		return (this: any)[_startDate].toISOString().split('T')[0];
+	}
+
+	endDate(): Date {
+		return (this: any)[_endDate].toISOString().split('T')[0];
 	}
 
 	/**
@@ -73,6 +86,6 @@ export class Claim implements IClaim, UniqueIdentifier {
 	 * returns textual representation
 	 */
 	toString() {
-		return `(${String(this.realm)}, ${this.action}, ${this.resource}, ${this.condition})`;
+		return `(${this.action}, ${this.resource}, ${this.condition})`;
 	}
 }
