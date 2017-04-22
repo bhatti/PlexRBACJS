@@ -371,13 +371,12 @@ The service will listen on port 3000 and you can test it with curl.
 	* PUT /realms/{realm-id}/roles/{id} with body of role details in JSON format.
 	* DELETE /realms/{realm-id}/roles/{id} – deletes role identified by id.
 
-### Claims
+### Authorization
 
-	* GET /realms/{realm-id}/claims/ – returns list of all claims in realm identified by realm-id in JSON format.
-	* GET /realms/{realm-id}/claims/{id} – returns details of given claim identified by id in given realm.
-	* POST /realms/{realm-id}/claims with body of claim details in JSON format. Note that this API uses POST instead of PUT as the id will be assigned by the server.
-	* DELETE /realms/{realm-id}/claims/{id} – deletes claim identified by id.
-
+	* GET /realms/{realm-id}/principals/{principal-id}/authorization – checks for access. It requires following parameters:
+     ** action 
+     ** resource 
+     ** optional parameters needed for instance based security 
 
 ## REST Example
 
@@ -389,6 +388,12 @@ Let's assume there are five roles: Teller, Customer-Service-Representative (CSR)
  * An accountant can create general ledger reports.
  * An accounting manager can modify ledger-posting rules.
  * A loan officer can create and modify loan accounts.
+
+### Starting Server 
+Let's start the server using 
+```bash 
+yarn start 
+``` 
 
 ### Creating a realm
 
