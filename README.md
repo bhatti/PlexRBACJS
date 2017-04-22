@@ -194,30 +194,38 @@ let cudGlpr     = repositoryLocator.claimRepository.save(new Claim(realm, '(crea
 ### Creating Roles
 
 Now, we will create roles for Teller, CSR, Accountant, AccountManager and LoanManager:
+```javascript
 let employee        = new Role(realm, 'Employee');
 let teller          = new Role(realm, 'Teller');
 teller.parents.add(employee);
 teller.claims.add(ruDeposit);
 repositoryLocator.roleRepository.save(teller);
+``` 
 
+```javascript
 let csr             = new Role(realm, 'CSR');
 csr.claims.add(cdDeposit);
 csr.parents.add(teller);
 repositoryLocator.roleRepository.save(csr);
+```
 
+```javascript
 let accountant      = new Role(realm, 'Accountant');
 accountant.claims.add(rdLedger);
 accountant.parents.add(employee);
 repositoryLocator.roleRepository.save(accountant);
+``` 
 
+```javascript
 let accountantMgr   = new Role(realm, 'AccountingManager');
 accountantMgr.claims.add(ruLoan);
 accountantMgr.claims.add(cdLoan);
 accountantMgr.claims.add(rGlpr);
 accountantMgr .parents.add(accountant);
 repositoryLocator.roleRepository.save(accountantMgr);
+```
 
-
+```javascript
 let loanOfficer     = new Role(realm, 'LoanOfficer');
 loanOfficer.claims.add(cudGlpr);
 loanOfficer.claims.add(new Claim(realm, '(create|delete)', 'LoanAccount', '');
@@ -231,23 +239,30 @@ repositoryLocator.roleRepository.save(loanOfficer);
 
 Next step is to create users for the realm or application so let’s define accounts for tom, cassy, ali, mike and larry, i.e.,
 ```javascript
-
 let tom     = new Employee(realm, 'tom', 'pass');
 tom.roles.add(teller);
 repositoryLocator.principalRepository.save(tom);
 
+```
+```javascript
 let cassy   = new Employee(realm, 'cassy', 'pass');
 cassy.roles.add(csr);
 let cassy   = repositoryLocator.principalRepository.save(cassy);
 
+```
+```javascript
 let ali     = new Principal(realm, 'ali', 'pass');
 ali.roles.add(accountant);
 repositoryLocator.principalRepository.save(ali);
 
+```
+```javascript
 let mike    = new Principal(realm, 'mike', 'pass');
 mike.roles.add(accountantMgr);
 repositoryLocator.principalRepository.save(mike);
 
+```
+```javascript
 let larry   = new Principal(realm, 'larry', 'pass');
 larry.claims.add(new Claim(this.realm, '(create|delete)', 'LoanAccount', ''));
 larry.claims.add(new Claim(this.realm, '(read|modify)', 'LoanAccount', ''));
