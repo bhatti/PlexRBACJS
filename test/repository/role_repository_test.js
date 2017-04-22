@@ -31,7 +31,7 @@ describe('RoleRepository', function() {
 		this.repositoryLocator.dbFactory.close();
 		done();
 	  });
-/*
+
 	  describe('#saveGetById', function() {
 		it('should not be able to get role by id without saving', async function() {
 			try {
@@ -89,7 +89,7 @@ describe('RoleRepository', function() {
 			}
 		});
 	  });
-*/
+
 	  describe('#saveRoleParents', function() {
 		it('should be able to add roles as parents', async function() {
 			//
@@ -110,7 +110,6 @@ describe('RoleRepository', function() {
 		});
 	  });
 
-/*
 	  describe('#saveRoleParents', function() {
 		it('should be able to remove roles as parents', async function() {
 			//
@@ -249,5 +248,4 @@ describe('RoleRepository', function() {
 			assert.ok(removed);
 		});
 	  });
-*/
 });
