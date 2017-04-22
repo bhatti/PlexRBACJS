@@ -44,17 +44,17 @@ export class SecurityManager implements ISecurityManager {
 						promises.push(new Promise((resolve, reject) => {
 							this.conditionEvaluator.evaluate(claim.condition, request.context).then(matched => {
 								if (matched) {
-									console.log(`### Granted conditional ${String(claim)} for ${String(request.resource)} to ${request.principalName}`);
+									//console.log(`### Granted conditional ${String(claim)} for ${String(request.resource)} to ${request.principalName}`);
 									effect = claim.effect;
 									resolve();
 								} else {
-									console.log(`### Failed to authorize ${String(claim)} for ${String(request.resource)} to ${request.principalName}`);
+									//console.log(`### Failed to authorize ${String(claim)} for ${String(request.resource)} to ${request.principalName}`);
 									resolve();
 								}
 							});
 						}));
 					} else {
-						console.log(`### Granted ${String(claim)} to ${request.principalName}`);
+						//console.log(`### Granted ${String(claim)} to ${request.principalName}`);
 						effect = claim.effect;
 						return;
 					}
