@@ -400,21 +400,300 @@ describe('SecurityService', function () {
           });
       });
     });
-    describe('GET /realms/realm-id/principals', function () {
-      it('Tom should not be able to read DepositAccount without correct region', (done) => {
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Tom the Teller should not be able to read DepositAccount without correct region', (done) => {
         chai.request(server)
-          .get(`/realms/${realmId}/principals/${tomId}/authorization?action=read&resource=DepositAccount&employeeRegion=WEST"`)
+          .get(`/realms/${realmId}/principals/${tomId}/authorization?action=read&resource=DepositAccount&employeeRegion=WEST`)
           .end((err, res) => {
               res.should.have.status(403);
             done();
           });
       });
     });
-    describe('GET /realms/realm-id/principals', function () {
-      it('Tom should be able to read DepositAccount', (done) => {
-          console.log(`/realms/${realmId}/principals/${tomId}/authorization?action=read&resource=DepositAccount&employeeRegion=MIDWEST"`)
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Tom the Teller should be able to read DepositAccount', (done) => {
         chai.request(server)
-          .get(`/realms/${realmId}/principals/${tomId}/authorization?action=read&resource=DepositAccount&employeeRegion=MIDWEST"`)
+          .get(`/realms/${realmId}/principals/${tomId}/authorization?action=read&resource=DepositAccount&employeeRegion=MIDWEST`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Tom the Teller should be able to modify DepositAccount', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${tomId}/authorization?action=modify&resource=DepositAccount&employeeRegion=MIDWEST`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Cassy the CSR should not be able to modify DepositAccount without region', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${cassyId}/authorization?action=modify&resource=DepositAccount`)
+          .end((err, res) => {
+              res.should.have.status(403);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Cassy the CSR should be able to modify DepositAccount with region', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${cassyId}/authorization?action=modify&resource=DepositAccount&employeeRegion=MIDWEST`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Cassy the CSR should be able to create DepositAccount with region', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${cassyId}/authorization?action=create&resource=DepositAccount&employeeRegion=MIDWEST`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Cassy the CSR should be able to delete DepositAccount with region', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${cassyId}/authorization?action=delete&resource=DepositAccount&employeeRegion=MIDWEST`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Ali the Accountant should not be able to read general ledger without year matching', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${aliId}/authorization?action=read&resource=GeneralLedger&transactionDateYear=2015&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(403);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Ali the Accountant should be able to read general ledger with year matching', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${aliId}/authorization?action=read&resource=GeneralLedger&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Ali the Accountant should be able to create general ledger with year matching', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${aliId}/authorization?action=create&resource=GeneralLedger&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Mike the AccountMgr should not be able to read loan account with higher balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=read&resource=LoanAccount&accountBalance=10001`)
+          .end((err, res) => {
+              res.should.have.status(403);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Mike the AccountMgr should be able to read loan account within balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=read&resource=LoanAccount&accountBalance=9999`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Mike the AccountMgr should be able to modify loan account within balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=modify&resource=LoanAccount&accountBalance=9999`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Mike the AccountMgr should be able to create loan account within balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=create&resource=LoanAccount&accountBalance=9999`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Mike the AccountMgr should be able to read general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=read&resource=GeneralLedgerPostingRules&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Mike the AccountMgr should not be able to create general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=create&resource=GeneralLedgerPostingRules&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(403);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to read read loan account', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=read&resource=LoanAccount&accountBalance=9999`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to modify read loan account', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=modify&resource=LoanAccount&accountBalance=9999`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to create read loan account', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=create&resource=LoanAccount&accountBalance=9999`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to read general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=read&resource=GeneralLedgerPostingRules&&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to create general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=create&resource=GeneralLedgerPostingRules&&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to modify general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=modify&resource=GeneralLedgerPostingRules&&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Larry the Loan-officer should be able to delete general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${larryId}/authorization?action=delete&resource=GeneralLedgerPostingRules&&transactionDateYear=2017&currentYear=2017`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to read loan account with higher balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=read&resource=LoanAccount`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to modify loan account with higher balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=modify&resource=LoanAccount`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to delete loan account with higher balance', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=delete&resource=LoanAccount`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to read general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=read&resource=GeneralLedgerPostingRules`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to create general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=create&resource=GeneralLedgerPostingRules`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to modify general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=modify&resource=GeneralLedgerPostingRules`)
+          .end((err, res) => {
+              res.should.have.status(200);
+            done();
+          });
+      });
+    });
+    describe('GET /realms/realm-id/principals/authorization', function () {
+      it('Barry the Branch-manager should be able to delete general ledger posting rules', (done) => {
+        chai.request(server)
+          .get(`/realms/${realmId}/principals/${barryId}/authorization?action=delete&resource=GeneralLedgerPostingRules`)
           .end((err, res) => {
               res.should.have.status(200);
             done();

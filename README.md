@@ -241,7 +241,7 @@ this.repositoryLocator.roleRepository.save(this.branchManager);
 
 ### Creating Users
 
-Next step is to create users for the realm or application so let’s define accounts for tom, cassy, ali, mike and larry, i.e.,
+Next step is to create users for the realm or application so let’s define accounts for tom, cassy, ali, mike and larry, barry, i.e.,
 ```javascript
 let tom     = new Employee(realm, 'tom', 'pass');
 tom.roles.add(teller);
@@ -544,7 +544,7 @@ which returns
 {"principalName":"mike","claims":[],"roles":[{"roleName":"AccountingManager","claims":[],"parents":[],"id":4}],"id":4}
 ```
 
-Finally we create an account for larry the loan officer:
+Next, we create an account for larry the loan officer:
 ```javascript
 curl -X POST "http://localhost:3000/realms/1/principals" -d '{"principalName":"larry","roles":[{"roleName":"LoanOfficer"}]}'
 ```
@@ -553,6 +553,15 @@ which returns
 {"principalName":"larry","claims":[],"roles":[{"roleName":"LoanOfficer","claims":[],"parents":[],"id":5}],"id":5}
 ```
 
+Finally, we create an account for barry the branch manager:
+```javascript
+```javascript
+curl -X POST "http://localhost:3000/realms/1/principals" -d '{"principalName":"barry","roles":[{"roleName":"LoanOfficer"}, {"roleName":"AccountManager"}]}'
+```
+which returns
+```javascript
+{"principalName":"barry","claims":[],"roles":[{"roleName":"LoanOfficer","claims":[],"parents":[],"id":5},{"roleName":"AccountingManager","id":4}],"id":6}
+```
 
 ### Authorization
 
@@ -664,12 +673,3 @@ Please send questions or suggestions to bhatti AT plexobject.com.
  * http://www.secs.oakland.edu/~kim2/papers/FASE04.pdf 
 
 
- #curl -X POST "http://localhost:3000/realms/1/principals" -d
- '{"principalName":"barry","claims":[{"action": "(read|modify|create|delete)",
- "resource": "LoanAccount", "condition": ""},{"action":
- "(read|modify|create|delete)", "resource": "GeneralLedgerPostingRules",
- "condition": ""}], "roles":[{"roleName":"BranchManager"}]}'
- #curl
- "http://localhost:3000/realms/1/principals/3/authorization?action=read&resource=DepositAccount&employeeRegion=MIDWEST"
- curl http://localhost:3000/realms/1/roles/4
- curl http://localhost:3000/realms/1/principals/3

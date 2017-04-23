@@ -36,7 +36,7 @@ export class SecurityManager implements ISecurityManager {
             let principal = await this.repositoryLocator.principalRepository.findByName(request.realmName, request.principalName);
             let allClaims = principal.allClaims();
             let effect = Claim.defaultDeny;
-            console.log(`Checking claims for ${principal.principalName} - ${allClaims}`);
+            //console.log(`Checking claims for ${principal.principalName} - ${allClaims} ------- ${JSON.stringify(request)}`);
             let promises = [];
             allClaims.forEach(async claim => {
                 if (claim.implies(request.action, request.resource)) {

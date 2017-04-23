@@ -602,7 +602,7 @@ describe('SecurityManager', function() {
     });
 
     describe('#check', function() {
-        it('Branch-manager should be able to create loan account within balance', async function() {
+        it('Branch-manager should be able to create loan account', async function() {
             let barry     = new Principal(this.realm, 'barry');
             // adding claims directly to override account balance limitations
             barry.claims.add(new Claim(this.realm, '(create|delete)', 'LoanAccount', ''));
@@ -619,7 +619,7 @@ describe('SecurityManager', function() {
         });
     });
     describe('#check', function() {
-        it('Branch-manager should be able to delete loan account within balance', async function() {
+        it('Branch-manager should be able to delete loan account', async function() {
             let barry     = new Principal(this.realm, 'barry');
             // adding claims directly to override account balance limitations
             barry.claims.add(new Claim(this.realm, '(create|delete)', 'LoanAccount', ''));
