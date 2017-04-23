@@ -290,77 +290,68 @@ Now the fun part of authorization, let’s check if user "tom" can view deposit-
 let securityManager = new SecurityManager(new ConditionEvaluator(), repositoryLocator);
 let request = new SecurityAccessRequest('banking', 'tom', 'read', 'DepositAccount', {});
 
-if securityManager.check(request)) {
-	// allow
-}
+let access = securityManager.check(request); 
+
 ```
-Above access should fail, now let’s check if cassy, the CSR can delete deposit-account, e.g.
+In above example, access should return 'deny', now let’s check if cassy, the CSR can delete deposit-account, e.g.
 ```javascript
 let request = new SecurityAccessRequest('banking', 'cassy', 'delete', 'DepositAccount', {});
 
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
-Above access should works as CSR have claims for deleting deposit-account.
+In above example, access should return 'allow', because CSR have claims for deleting deposit-account.
 
 Now, let’s check if ali, the accountant can view general-ledger, e.g.
 ```javascript
 let request = new SecurityAccessRequest('banking', 'ali', 'read', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
-Which works as expected. Next we check if ali can delete general-ledger:
+Which would return 'allow' as expected. Next we check if ali can delete general-ledger:
 ```javascript
 let request = new SecurityAccessRequest('banking', 'ali', 'delete', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
 
-Which would fail as only account-manager can delete.
+Which would return 'deny' as only account-manager can delete.
 
 Next we check if mike, the account-manager can create general-ledger, e.g.
 ```javascript
 let request = new SecurityAccessRequest('banking', 'mike', 'create', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
-Which works as expected. Now we check if mike can create posting-rules of general-ledger, e.g.
+Which would return 'allow' as expected. Now we check if mike can create posting-rules of general-ledger, e.g.
 ```javascript
 let request = new SecurityAccessRequest('banking', 'mike', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
-Which fails authorization.
+Which would return 'deny'.
 
 Then we check if larry, the loan officer can create posting-rules of general-ledger, e.g.
 ```javascript
 let request = new SecurityAccessRequest('banking', 'larry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
-Which works as expected. Now, let’s check the same claim but with different year, e.g.
+Which would return 'allow' as expected. Now, let’s check the same claim but with different year, e.g.
 ```javascript
 let request = new SecurityAccessRequest('banking', 'larry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2015, 'accountBalance': 5000});
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
 
-Which fails as year doesn’t match.
+Which would return 'deny' because the year doesn’t match.
 
 Next, we try to create loan account with balance higher than 10000 as branch manager because we removed constraints, e.g. 
 ```javascript
 let request = new SecurityAccessRequest('banking', 'barry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2015, 'accountBalance': 15000});
 
-if securityManager.check(request)) {
-}
+let access = securityManager.check(request); 
 ```
-Which should work.
+Which would return 'allow'.
 
 
 
