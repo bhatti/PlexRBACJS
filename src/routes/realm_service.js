@@ -9,19 +9,18 @@ const _      = require('lodash'),
 	  errors = require('restify-errors');
 
 
-import {Realm}                  from '../src/domain/realm';
-import type {RealmRepository}   from '../src/repository/interface';
+import {Realm}                  from '../domain/realm';
+import type {RealmRepository}   from '../repository/interface';
 
 /**
  * POST
  */
 global.server.post('/realms', async (req, res, next) => {
 	if (!req.body) {
-		return next(new errors.MissingParameterError('Realm JSON body could not be found.'));
+		return next(new errors.MissingParameterError(`Realm JSON body could not be found.`));
 	}
 
 	let json = JSON.parse(req.body);
-	//
 	try {
 		let realm = new Realm(json.realmName);
 		let saved = await global.server.repositoryLocator.realmRepository.save(realm);
@@ -52,6 +51,9 @@ global.server.get('/realms', async (req, res, next) => {
  */
 global.server.get('/realms/:realmId', async (req, res, next) => {
 
+	if (!req.params.realmId) {
+		return next(new errors.MissingParameterError('realm-id parameter could not be found.'));
+	}
 	try {
 		let realm = await global.server.repositoryLocator.realmRepository.findById(req.params.realmId);
 		res.send(realm);

@@ -1,6 +1,6 @@
 var path = require('path')
 module.exports = {
-  entry: path.resolve(__dirname, 'app.js'),
+  entry: ['babel-polyfill', './src/app.js'],
   output: {
     filename: 'bundle.js',
     path: path.resolve(__dirname, 'public'),

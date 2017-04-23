@@ -1,13 +1,16 @@
 'use strict'
 
-import {RepositoryLocator}          from './src/repository/repository_locator';
-import {SecurityManager}            from './src/manager/security_manager';
-import {ConditionEvaluator}         from './src/expr/expr_evaluator';
+require("babel-core/register");
+require("babel-polyfill");
+
+import {RepositoryLocator}          from './repository/repository_locator';
+import {SecurityManager}            from './manager/security_manager';
+import {ConditionEvaluator}         from './expr/expr_evaluator';
 
 /**
  * Module Dependencies
  */
-const config        = require('./config'),
+const config        = require('../config'),
 	  restify       = require('restify'),
 	  bunyan        = require('bunyan'),
 	  winston       = require('winston'),
@@ -60,6 +63,7 @@ server.listen(config.port, () => {
 	server.repositoryLocator = new RepositoryLocator('sqlite', '/tmp/test.db', () => {});
 	server.securityManager   = new SecurityManager(new ConditionEvaluator(), server.repositoryLocator);
 	//
+	require('./routes/claim_service');
 	require('./routes/realm_service');
 	require('./routes/role_service');
 	require('./routes/principal_service');

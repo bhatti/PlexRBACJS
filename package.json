@@ -5,16 +5,16 @@
   "repository": "git@github.com:bhatti/PlexRBACJS.git",
   "license": "MIT",
   "scripts": {
-    "flow": "flow check",
     "flow": "yarn run flow",
+    "webpack": "webpack",
     "build": "babel src/ -d lib/",
     "prepublish": "yarn run build",
     "lib": "yarn run babel -- src/ -d lib/",
     "mocha": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill --recursive",
-    "x": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/repository/claim_repository_test.js",
-    "y": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/repository/role_repository_test.js",
+    "x": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/manager/security_manager_test.js",
+    "y": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/routes/security_service_test.js",
     "test": "nyc --reporter=html --reporter=text mocha --timeout=4000 --recursive --compilers js:babel-register --require babel-polyfill",
-    "start": "babel-node app.js --presets es2015,stage-2",
+    "start": "NODE_ENV=dev && babel-node src/app.js --presets es2015,stage-2",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "dependencies": {
@@ -45,6 +45,7 @@
     "babel-runtime": "^6.23.0",
     "chai": "^3.5.0",
     "chai-as-promised": "^6.0.0",
+    "chai-http": "^3.0.0",
     "coveralls": "^2.13.0",
     "flow-bin": "^0.44.2",
     "mocha": "^3.2.0",

@@ -6,8 +6,8 @@
 const _      = require('lodash'),
 	  errors = require('restify-errors');
 
-import {SecurityAccessRequest}      from '../src/domain/security_access_request';
-import {Claim}                      from '../src/domain/claim';
+import {SecurityAccessRequest}      from '../domain/security_access_request';
+import {Claim}                      from '../domain/claim';
 
 
 
@@ -21,6 +21,12 @@ global.server.get('/realms/:realmId/principals/:principalId/authorization', asyn
 	}
 	if (!req.params.resource) {
 		return next(new errors.MissingParameterError('resource parameter could not be found.'));
+	}
+	if (!req.params.realmId) {
+		return next(new errors.MissingParameterError('realm-id parameter could not be found.'));
+	}
+	if (!req.params.principalId) {
+		return next(new errors.MissingParameterError('principal-id parameter could not be found.'));
 	}
 
 	let realm       = await global.server.repositoryLocator.realmRepository.findById(req.params.realmId);

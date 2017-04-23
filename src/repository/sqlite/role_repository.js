@@ -252,19 +252,45 @@ export class RoleRepositorySqlite implements RoleRepository {
 		assert(id, 'role id not specified');
 		//
 		this.cache.remove('role', `id_${id}`);
-		let promise = new Promise((resolve, reject) => {
-			this.dbFactory.db.run('DELETE FROM principals_roles WHERE role_id = ?', id, (err) => {});
-			this.dbFactory.db.run('DELETE FROM role_parents WHERE role_id = ?', id, (err) => {});
+		let mainPromise = new Promise((resolve, reject) => {
 			this.dbFactory.db.run('DELETE FROM roles WHERE rowid = ?', id, (err) => {
 				if (err) {
 					reject(new PersistenceError(`Failed to remove role with id ${id} due to ${err}`));
+				} else {
+					resolve(true);
+				}
+			});
+		});
+		let principalPromise = new Promise((resolve, reject) => {
+			this.dbFactory.db.run('DELETE FROM principals_roles WHERE role_id = ?', id, (err) => {
+				if (err) {
+					reject(new PersistenceError(`Failed to remove role with role-id ${id} due to ${err}`));
 				} else {
 					this.cache.remove('role', `id_${id}`);
 					resolve(true);
 				}
 			});
 		});
-		return await promise;
+		let parentPromise = new Promise((resolve, reject) => {
+			this.dbFactory.db.run('DELETE FROM role_parents WHERE role_id = ?', id, (err) => {
+				if (err) {
+					reject(new PersistenceError(`Failed to remove role with role-id ${id} due to ${err}`));
+				} else {
+					this.cache.remove('role', `id_${id}`);
+					resolve(true);
+				}
+			});
+		});
+		let claimPromise = new Promise((resolve, reject) => {
+                  this.dbFactory.db.run('DELETE FROM roles_claims WHERE role_id = ?', id, (err) => {
+                            if (err) {
+                                  reject(new PersistenceError(`Failed to delete role claim with role-id ${id}`));
+                            } else {
+                                  resolve(true);
+                            }
+                      });
+			});
+        return await Promise.all([mainPromise, principalPromise, parentPromise, claimPromise]);
 	}
 
 	/**

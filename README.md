@@ -87,18 +87,14 @@ This layer defines SecurityManager for validating authorization policies.
 
 This layer proivdes evaluation engine for supporting instance based security.
 
-### Service Layer
-
-This layer defines SecurityService for managing principals, roles, and realms.
-
-
-### REST API Layer
+### REST API Service Layer
 
 This layer defines REST services such as:
 
 	* RealmService – this service provides REST APIs for accessing Realms.
 	* PrincipalService – this service provides REST APIs for accessing Principals.
 	* RoleService – this service provides REST APIs for accessing Roles.
+	* ClaimService – this service provides REST APIs for accessing Claims.
 	* SecurityService – this service provides REST APIs for authorizing claims.
 
 
@@ -177,7 +173,8 @@ let realm = realmRepository.save(new Realm('banking'));
 
 We can then create new claims and save them in the database as follows:
 ```javascript
-let ruDeposit   = repositoryLocator.claimRepository.save(new Claim(realm, '(read|modify)', 'DepositAccount', 'employeeRegion == "MIDWEST"'));
+let ruDeposit   = repositoryLocator.claimRepository.save(new Claim(realm, '(read|modify)', 'DepositAccount', 'employeeRegion == "MIDWEST"')); 
+
 let cdDeposit   = repositoryLocator.claimRepository.save(new Claim(realm, '(create|delete)', 'DepositAccount', 'employeeRegion == "MIDWEST"'));
 
 let rdLedger    = repositoryLocator.claimRepository.save(new Claim(realm, '(read|create)', 'GeneralLedger', 'transactionDateYear == currentYear'));
@@ -234,6 +231,13 @@ loanOfficer.parents.add(accountantMgr);
 repositoryLocator.roleRepository.save(loanOfficer);
 ```
 
+```javascript
+this.branchManager       = new Role(this.realm, 'BranchManager');
+this.branchManager.parents.add(this.accountantMgr);
+this.branchManager.parents.add(this.loanOfficer);
+this.repositoryLocator.roleRepository.save(this.branchManager);
+```
+
 
 ### Creating Users
 
@@ -264,12 +268,20 @@ repositoryLocator.principalRepository.save(mike);
 ```
 ```javascript
 let larry   = new Principal(realm, 'larry', 'pass');
-larry.claims.add(new Claim(this.realm, '(create|delete)', 'LoanAccount', ''));
-larry.claims.add(new Claim(this.realm, '(read|modify)', 'LoanAccount', ''));
 larry.roles.add(loanOfficer);
 let larry   = repositoryLocator.principalRepository.save(larry);
 
 ```
+
+```javascript
+let barry     = new Principal(this.realm, 'barry');
+// adding claims directly to override account balance limitations
+barry.claims.add(new Claim(this.realm, '(read|modify|create|delete)', 'LoanAccount', ''));
+barry.claims.add(new Claim(this.realm, '(read|create|modify|delete)', 'GeneralLedgerPostingRules', ''));
+barry.roles.add(this.branchManager);
+this.repositoryLocator.principalRepository.save(barry);
+```
+Note, we can add claims directly to user to override or add new claims, e.g. in above examples we removed conditional constraints for branch manager.
 
 ### Authorization
 
@@ -294,14 +306,14 @@ Above access should works as CSR have claims for deleting deposit-account.
 
 Now, let’s check if ali, the accountant can view general-ledger, e.g.
 ```javascript
-let request = new SecurityAccessRequest('banking', 'ali', 'read', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'account': new Account('zak', 500)});
+let request = new SecurityAccessRequest('banking', 'ali', 'read', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
 if securityManager.check(request)) {
 }
 ```
 
 Which works as expected. Next we check if ali can delete general-ledger:
 ```javascript
-let request = new SecurityAccessRequest('banking', 'ali', 'delete', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'account': new Account('zak', 500)});
+let request = new SecurityAccessRequest('banking', 'ali', 'delete', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
 if securityManager.check(request)) {
 }
 ```
@@ -311,14 +323,14 @@ Which would fail as only account-manager can delete.
 
 Next we check if mike, the account-manager can create general-ledger, e.g.
 ```javascript
-let request = new SecurityAccessRequest('banking', 'mike', 'create', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'account': new Account('zak', 500)});
+let request = new SecurityAccessRequest('banking', 'mike', 'create', 'GeneralLedger', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
 if securityManager.check(request)) {
 }
 ```
 
 Which works as expected. Now we check if mike can create posting-rules of general-ledger, e.g.
 ```javascript
-let request = new SecurityAccessRequest('banking', 'mike', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'account': new Account('zak', 500)});
+let request = new SecurityAccessRequest('banking', 'mike', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
 if securityManager.check(request)) {
 }
 ```
@@ -327,19 +339,29 @@ Which fails authorization.
 
 Then we check if larry, the loan officer can create posting-rules of general-ledger, e.g.
 ```javascript
-let request = new SecurityAccessRequest('banking', 'larry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'account': new Account('zak', 500)});
+let request = new SecurityAccessRequest('banking', 'larry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2017, 'currentYear': new Date().getFullYear(), 'accountBalance': 5000});
 if securityManager.check(request)) {
 }
 ```
 
 Which works as expected. Now, let’s check the same claim but with different year, e.g.
 ```javascript
-let request = new SecurityAccessRequest('banking', 'larry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2015, 'account': new Account('zak', 500)});
+let request = new SecurityAccessRequest('banking', 'larry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2015, 'accountBalance': 5000});
 if securityManager.check(request)) {
 }
 ```
 
 Which fails as year doesn’t match.
+
+Next, we try to create loan account with balance higher than 10000 as branch manager because we removed constraints, e.g. 
+```javascript
+let request = new SecurityAccessRequest('banking', 'barry', 'create', 'GeneralLedgerPostingRules', {'transactionDateYear': 2015, 'accountBalance': 15000});
+
+if securityManager.check(request)) {
+}
+```
+Which should work.
+
 
 
 ## Building REST services using Resty framework:
@@ -455,8 +477,9 @@ curl -X POST "http://localhost:3000/realms/1/roles" -d '{"roleName":"CSR","claim
 ```
 
 Then we create role for "Accountant":
+
 ```javascript
-{"roleName":"CSR","claims":[{"action":"(create|delete)","resource":"DepositAccount","condition":"employeeRegion == \"MIDWEST\"","effect":"allow","id":2}],"parents":[{"roleName":"Teller","claims":[{"action":"(create|delete)","resource":"DepositAccount","condition":"employeeRegion == \"MIDWEST\"","effect":"allow","id":2}],"parents":[],"id":2}],"id":7}
+curl -X POST "http://localhost:3000/realms/1/roles" -d '{"roleName":"Accountant","claims":[{"action": "(read|create)", "resource": "GeneralLedger", "condition": "transactionDateYear == currentYear", "effect": "allow"}], "parents":[{"id": 1}]}'
 ```
 
 which returns:
@@ -490,7 +513,7 @@ which returns:
 
 Next step is to create users for our application and assign roles. Let's define an accounts for tom the teller:
 ```javascript
-curl -X POST "http://localhost:3000/realms/1/principals" -d '{"principalName":"tom","roles":[{"roleName":"teller"}]}'
+curl -X POST "http://localhost:3000/realms/1/principals" -d '{"principalName":"tom","roles":[{"roleName":"Teller"}]}'
 ```
 which returns
 ```javascript
@@ -638,4 +661,15 @@ Please send questions or suggestions to bhatti AT plexobject.com.
  * http://hissa.nist.gov/rbac/poole/ir5820/ir5820s31.htm
  * http://www.coresecuritypatterns.com/patterns.htm
  * http://cwiki.apache.org/confluence/display/SHIRO/Index
- * http://www.secs.oakland.edu/~kim2/papers/FASE04.pdf
+ * http://www.secs.oakland.edu/~kim2/papers/FASE04.pdf 
+
+
+ #curl -X POST "http://localhost:3000/realms/1/principals" -d
+ '{"principalName":"barry","claims":[{"action": "(read|modify|create|delete)",
+ "resource": "LoanAccount", "condition": ""},{"action":
+ "(read|modify|create|delete)", "resource": "GeneralLedgerPostingRules",
+ "condition": ""}], "roles":[{"roleName":"BranchManager"}]}'
+ #curl
+ "http://localhost:3000/realms/1/principals/3/authorization?action=read&resource=DepositAccount&employeeRegion=MIDWEST"
+ curl http://localhost:3000/realms/1/roles/4
+ curl http://localhost:3000/realms/1/principals/3
