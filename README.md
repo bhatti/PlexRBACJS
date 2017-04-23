@@ -60,7 +60,7 @@ The condition contains a Javascript based logical expressions and provides acces
 
 PlexRBACJS consists of following layers
 ### Business Domain Layer
-<img src="https://raw.githubusercontent.com/bhatti/PlexRBACJS/master/rbacjs_domain.png">
+<img src="https://raw.githubusercontent.com/bhatti/PlexRBACJS/master/images/rbacjs_domain.png">
 
 This layer defines core classes that are part of the RBAC based security realm such as:
 
@@ -103,7 +103,7 @@ This layer defines REST services such as:
 This layer provides caching security claims to improve performance.
 
 ## Simple Example
-<img src="https://raw.githubusercontent.com/bhatti/PlexRBACJS/master/rbacjs_bank.png">
+<img src="https://raw.githubusercontent.com/bhatti/PlexRBACJS/master/images/rbacjs_bank.png">
 
 Let's start with a banking example where a bank-object can be account, general-ledger-report or ledger-posting-rules and account is further grouped into customer account or loan account. Further, Let’s assume there are five roles: Teller, Customer-Service-Representative (CSR), Account, AccountingManager and LoanOfficer, where
 	* A teller can modify customer deposit accounts — but only if customer and teller live in same region

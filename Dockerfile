@@ -16,4 +16,5 @@ COPY . /usr/src/app
 # replace this with your application's default port
 EXPOSE 8888
 
-CMD [ "yarn" , "run" ]
+CMD [ "yarn" , "run" ] 
+#
