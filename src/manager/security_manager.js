@@ -38,7 +38,7 @@ export class SecurityManager implements ISecurityManager {
             let effect = Claim.defaultDeny;
             //console.log(`Checking claims for ${principal.principalName} - ${allClaims} ------- ${JSON.stringify(request)}`);
             let promises = [];
-            allClaims.forEach(async claim => {
+            allClaims.forEach(claim => {
                 if (claim.implies(request.action, request.resource)) {
                     if (claim.hasCondition()) {
                         promises.push(new Promise((resolve, reject) => {
