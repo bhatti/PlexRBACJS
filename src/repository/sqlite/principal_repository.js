@@ -156,11 +156,13 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
     async removeById(id: number): Promise<boolean> {
         assert(id, 'principal-id not specified');
 
+        let removed = false;
         let mainPromise = new Promise((resolve, reject) => {
                             this.dbFactory.db.run('DELETE FROM principals WHERE rowid = ?', id, (err) => {
                                   if (err) {
                                         reject(new PersistenceError(`Failed to remove principal ${id}`));
                                   } else {
+                                    removed = true;
                                         resolve(true);
                                   }
                             });
@@ -183,7 +185,8 @@ export class PrincipalRepositorySqlite implements PrincipalRepository {
                                   }
                             });
                   });
-        return await Promise.all([mainPromise, claimPromise, rolePromise]);
+        await Promise.all([mainPromise, claimPromise, rolePromise]);
+        return removed;
     }
 
     /**

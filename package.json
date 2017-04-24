@@ -11,7 +11,7 @@
     "prepublish": "yarn run build",
     "lib": "yarn run babel -- src/ -d lib/",
     "mocha": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill --recursive",
-    "x": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/manager/security_manager_test.js",
+    "x": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/repository/claim_repository_test.js",
     "y": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/routes/security_service_test.js",
     "test": "nyc --reporter=html --reporter=text mocha --timeout=4000 --recursive --compilers js:babel-register --require babel-polyfill",
     "start": "NODE_ENV=dev && babel-node src/app.js --presets es2015,stage-2",

@@ -123,11 +123,13 @@ export class ClaimRepositorySqlite implements ClaimRepository {
 	 */
 	async removeById(id: number): Promise<boolean> {
 		assert(id, 'id not specified');
+    let removed = false;
 		let mainPromise = new Promise((resolve, reject) => {
 				  this.dbFactory.db.run('DELETE FROM claims WHERE rowid = ?', id, (err) => {
 						if (err) {
 							reject(new PersistenceError(`Failed to delete claim with id ${id}`));
 						} else {
+              removed = true;
 							resolve(true);
 						}
 				  });
@@ -150,7 +152,8 @@ export class ClaimRepositorySqlite implements ClaimRepository {
                             }
                       });
 			});
-        return await Promise.all([mainPromise, principalPromise, rolePromise]);
+        await Promise.all([mainPromise, principalPromise, rolePromise]);
+        return removed;
 	}
 
 	/**
