@@ -43,11 +43,11 @@ export class Role implements IRole, UniqueIdentifier {
 		return (this: any)[_realm];
 	}
 
-	startDate(): Date {
+	startDate(): string {
 		return (this: any)[_startDate].toISOString().split('T')[0];
 	}
 
-	endDate(): Date {
+	endDate(): string {
 		return (this: any)[_endDate].toISOString().split('T')[0];
 	}
 

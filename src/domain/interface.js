@@ -37,12 +37,12 @@ export interface IRole {
     /**
      * This method returns start-date when role is assigned
 */
-    startDate(): Date;
+    startDate(): string;
 
     /**
      * This method returns end-date when role is assigned
 */
-    endDate(): Date;
+    endDate(): string;
 
 }
 
@@ -136,10 +136,10 @@ export interface IClaim {
     /**
      * This method returns start-date when claim is assigned
 */
-    startDate(): Date;
+    startDate(): string;
 
     /**
      * This method returns end-date when claim is assigned
 */
-    endDate(): Date;
+    endDate(): string;
 }

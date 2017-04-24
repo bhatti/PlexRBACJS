@@ -8,7 +8,6 @@ const assert        = require('assert');
 const _realm        = Symbol('realm');
 const _startDate    = Symbol('startDate');
 const _endDate      = Symbol('endDate');
-const _effect       = Symbol('effect');
 
 /**
  * Claim implements IClaim for defining access attributes
@@ -61,11 +60,11 @@ export class Claim implements IClaim, UniqueIdentifier {
 		return (this: any)[_realm];
 	}
 
-	startDate(): Date {
+	startDate(): string {
 		return (this: any)[_startDate].toISOString().split('T')[0];
 	}
 
-	endDate(): Date {
+	endDate(): string {
 		return (this: any)[_endDate].toISOString().split('T')[0];
 	}
 
