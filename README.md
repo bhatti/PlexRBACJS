@@ -11,7 +11,8 @@ PlexRBACJS provides APIs to add support for role and claim based security. It su
 - Roles can be inherited
 - Claim based security, where claims define permittable actions and can be associated with principals or
   roles, which are in turn associated to principals.
-- Instance based security using dynamic context and regular expressions
+- Instance based security using dynamic context and regular expressions. 
+- Roles and claims can be assigned within a range of time period.
 
 ## Requirements:
 - Javascript ES6
@@ -28,7 +29,6 @@ PlexRBACJS provides APIs to add support for role and claim based security. It su
 - Checkout code from
 ```bash
 git clone git@github.com:bhatti/PlexRBACJS.github
-yarn install
 ```
 - Building
 ```bash
