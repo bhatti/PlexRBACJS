@@ -123,37 +123,38 @@ export class ClaimRepositorySqlite implements ClaimRepository {
 	 */
 	async removeById(id: number): Promise<boolean> {
 		assert(id, 'id not specified');
-    let removed = false;
+		let removed = false;
 		let mainPromise = new Promise((resolve, reject) => {
 				  this.dbFactory.db.run('DELETE FROM claims WHERE rowid = ?', id, (err) => {
 						if (err) {
 							reject(new PersistenceError(`Failed to delete claim with id ${id}`));
 						} else {
-              removed = true;
+			  removed = true;
 							resolve(true);
 						}
 				  });
 			});
 		let principalPromise = new Promise((resolve, reject) => {
-                  this.dbFactory.db.run('DELETE FROM principals_claims WHERE claim_id = ?', id, (err) => {
-                            if (err) {
-                                  reject(new PersistenceError(`Failed to delete claim with id ${id}`));
-                            } else {
-                                  resolve(true);
-                            }
-                      });
+				  this.dbFactory.db.run('DELETE FROM principals_claims WHERE claim_id = ?', id, (err) => {
+							if (err) {
+								  reject(new PersistenceError(`Failed to delete claim with id ${id}`));
+							} else {
+								  resolve(true);
+							}
+					  });
 			});
 		let rolePromise = new Promise((resolve, reject) => {
-                  this.dbFactory.db.run('DELETE FROM roles_claims WHERE claim_id = ?', id, (err) => {
-                            if (err) {
-                                  reject(new PersistenceError(`Failed to delete claim with id ${id}`));
-                            } else {
-                                  resolve(true);
-                            }
-                      });
+				  this.dbFactory.db.run('DELETE FROM roles_claims WHERE claim_id = ?', id, (err) => {
+							if (err) {
+								  reject(new PersistenceError(`Failed to delete claim with id ${id}`));
+							} else {
+								  resolve(true);
+							}
+					  });
 			});
-        await Promise.all([mainPromise, principalPromise, rolePromise]);
-        return removed;
+		await Promise.all([mainPromise, principalPromise, rolePromise]);
+		return removed;
+
 	}
 
 	/**
