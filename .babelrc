@@ -4,5 +4,6 @@
     "syntax-flow",
     "transform-flow-strip-types",
     "transform-async-to-generator",
+    "transform-runtime",
     "transform-regenerator"
 ]}
