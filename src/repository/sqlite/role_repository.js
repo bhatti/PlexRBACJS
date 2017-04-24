@@ -250,13 +250,15 @@ export class RoleRepositorySqlite implements RoleRepository {
 	 */
 	async removeById(id: number): Promise<boolean> {
 		assert(id, 'role id not specified');
-		//
+		// 
+        let removed = false;
 		this.cache.remove('role', `id_${id}`);
 		let mainPromise = new Promise((resolve, reject) => {
 			this.dbFactory.db.run('DELETE FROM roles WHERE rowid = ?', id, (err) => {
 				if (err) {
 					reject(new PersistenceError(`Failed to remove role with id ${id} due to ${err}`));
 				} else {
+                    removed = true;
 					resolve(true);
 				}
 			});
@@ -290,7 +292,8 @@ export class RoleRepositorySqlite implements RoleRepository {
                             }
                       });
 			});
-        return await Promise.all([mainPromise, principalPromise, parentPromise, claimPromise]);
+        await Promise.all([mainPromise, principalPromise, parentPromise, claimPromise]);
+        return removed;
 	}
 
 	/**

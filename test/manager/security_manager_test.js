@@ -696,6 +696,4 @@ describe('SecurityManager', function() {
         });
     });
 
-
-
 });

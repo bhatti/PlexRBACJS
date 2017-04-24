@@ -15,31 +15,31 @@ import {DefaultSecurityCache}       from '../cache/security_cache';
 
 /**
  * RepositoryLocator provides access repositories
- */
+*/
 export class RepositoryLocator {
-	dbFactory:            DBFactory;
-	claimRepository:      ClaimRepository;
-	realmRepository:      RealmRepository;
-	principalRepository:  PrincipalRepository;
-	roleRepository:       RoleRepository;
+    dbFactory:            DBFactory;
+    claimRepository:      ClaimRepository;
+    realmRepository:      RealmRepository;
+    principalRepository:  PrincipalRepository;
+    roleRepository:       RoleRepository;
 
-	constructor(kind: string, dbPath: string, done: () => void) {
-	  this.dbFactory = new DBFactory(dbPath);
-	  this.dbFactory.db.on('trace', function(trace){
-		  //console.log(`trace ${trace}`);
-	  })
-	  //
-	  this.realmRepository     = new RealmRepositorySqlite(this.dbFactory, new DefaultSecurityCache());
-	  this.claimRepository     = new ClaimRepositorySqlite(this.dbFactory, this.realmRepository);
-	  this.roleRepository      = new RoleRepositorySqlite(this.dbFactory, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
-	  this.principalRepository = new PrincipalRepositorySqlite(this.dbFactory, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
-	  //
-	  if (fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0) {
-		  done();
-	  } else {
-		  this.dbFactory.createTables(() => {
-			done();
-		  });
-	  }
-	}
+    constructor(kind: string, dbPath: string, done: () => void) {
+        this.dbFactory = new DBFactory(dbPath);
+        this.dbFactory.db.on('trace', function(trace){
+            //console.log(`trace ${trace}`);
+        })
+        //
+        this.realmRepository     = new RealmRepositorySqlite(this.dbFactory, new DefaultSecurityCache());
+        this.claimRepository     = new ClaimRepositorySqlite(this.dbFactory, this.realmRepository);
+        this.roleRepository      = new RoleRepositorySqlite(this.dbFactory, this.realmRepository, this.claimRepository, new DefaultSecurityCache());
+        this.principalRepository = new PrincipalRepositorySqlite(this.dbFactory, this.realmRepository, this.roleRepository, this.claimRepository, new DefaultSecurityCache());
+        //
+        if (fs.existsSync(dbPath) && fs.statSync(dbPath).size > 0) {
+            done();
+        } else {
+            this.dbFactory.createTables(() => {
+                done();
+            });
+        }
+    }
 }

@@ -26,91 +26,91 @@ describe('PrincipalRepository', function() {
     let repositoryLocator: RepositoryLocator;
 
     before(function(done) {
-      this.repositoryLocator = new RepositoryLocator('sqlite', ':memory:', done);
+        this.repositoryLocator = new RepositoryLocator('sqlite', ':memory:', done);
     });
 
-  after(function(done) {
-    this.repositoryLocator.dbFactory.close();
-    done();
-  });
-
-  describe('#saveGetById', function() {
-    it('should not be able to get principal by id without saving', async function() {
-        try {
-            let principal = await this.repositoryLocator.principalRepository.findById(1000);
-            await principal;
-            assert(false, 'should not return principal');
-        } catch(err) {
-        }
+    after(function(done) {
+        this.repositoryLocator.dbFactory.close();
+        done();
     });
-  });
 
-  describe('#saveGetById', function() {
-    it('should be able to get principal by id after saving', async function() {
-        let realm  = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
-        let saved  = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'superuser'));
-        let loaded = await this.repositoryLocator.principalRepository.findById(saved.id);
-        assert.equal('superuser', loaded.principalName);
+    describe('#saveGetById', function() {
+        it('should not be able to get principal by id without saving', async function() {
+            try {
+                let principal = await this.repositoryLocator.principalRepository.findById(1000);
+                await principal;
+                assert(false, 'should not return principal');
+            } catch(err) {
+            }
+        });
     });
-  });
 
-
-  describe('#saveAndRemoveGetById', function() {
-    it('should be able to save and remove principal by id', async function() {
-        let realm   = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
-        let saved   = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'username'));
-        let removed = await this.repositoryLocator.principalRepository.removeById(saved.id);
-
-        assert.equal(true, removed);
-
-        try {
-            let principal = await this.repositoryLocator.principalRepository.findById(saved.id);
-            await principal;
-            assert(false, 'should not return principal');
-        } catch(err) {
-        }
+    describe('#saveGetById', function() {
+        it('should be able to get principal by id after saving', async function() {
+            let realm  = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+            let saved  = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'superuser'));
+            let loaded = await this.repositoryLocator.principalRepository.findById(saved.id);
+            assert.equal('superuser', loaded.principalName);
+        });
     });
-  });
 
 
-  describe('#saveGetByName', function() {
-    it('should be able to get principal by name after saving', async function() {
-        let realm     = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
-        let saved     = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'xuser'));
-        let loaded    = await this.repositoryLocator.principalRepository.findByName(realm.realmName, saved.principalName);
-        assert.equal('xuser', loaded.principalName);
+    describe('#saveAndRemoveGetById', function() {
+        it('should be able to save and remove principal by id', async function() {
+            let realm   = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+            let saved   = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'username'));
+            let removed = await this.repositoryLocator.principalRepository.removeById(saved.id);
+
+            assert.equal(true, removed);
+
+            try {
+                let principal = await this.repositoryLocator.principalRepository.findById(saved.id);
+                await principal;
+                assert(false, 'should not return principal');
+            } catch(err) {
+            }
+        });
     });
-  });
 
 
-  describe('#saveGetByName', function() {
-    it('should not be able to get principal by unknown name', async function() {
-        try {
-            let principal = await this.repositoryLocator.principalRepository.findByName('rand-realm', 1000);
-            await principal;
-            assert(false, 'should not return principal');
-        } catch(err) {
-        }
+    describe('#saveGetByName', function() {
+        it('should be able to get principal by name after saving', async function() {
+            let realm     = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+            let saved     = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'xuser'));
+            let loaded    = await this.repositoryLocator.principalRepository.findByName(realm.realmName, saved.principalName);
+            assert.equal('xuser', loaded.principalName);
+        });
     });
-  });
 
 
-  describe('#search', function() {
-    it('should be able to search principal by name', async function() {
-        let realm       = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
-        let saved       = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'searchuser'));
-        let criteria    = new Map();
-        criteria.set('principal_name', 'searchuser');
-        let results = await this.repositoryLocator.principalRepository.search(criteria);
-        assert.equal(1, results.length);
-        assert.equal('searchuser', results[0].principalName);
+    describe('#saveGetByName', function() {
+        it('should not be able to get principal by unknown name', async function() {
+            try {
+                let principal = await this.repositoryLocator.principalRepository.findByName('rand-realm', 1000);
+                await principal;
+                assert(false, 'should not return principal');
+            } catch(err) {
+            }
+        });
     });
-  });
 
-  describe('#removeById', function() {
-    it('should fail because of unknown id', async function() {
-        let removed = await this.repositoryLocator.principalRepository.removeById(1000);
-        assert.ok(removed);
+
+    describe('#search', function() {
+        it('should be able to search principal by name', async function() {
+            let realm       = await this.repositoryLocator.realmRepository.save(new Realm(`random-domain_${Math.random()}`));
+            let saved       = await this.repositoryLocator.principalRepository.save(new Principal(realm, 'searchuser'));
+            let criteria    = new Map();
+            criteria.set('principal_name', 'searchuser');
+            let results = await this.repositoryLocator.principalRepository.search(criteria);
+            assert.equal(1, results.length);
+            assert.equal('searchuser', results[0].principalName);
+        });
     });
-  });
+
+    describe('#removeById', function() {
+        it('should fail because of unknown id', async function() {
+            let removed = await this.repositoryLocator.principalRepository.removeById(1000);
+            assert.ok(removed);
+        });
+    });
 });
