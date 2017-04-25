@@ -101,17 +101,17 @@ export interface IClaim {
 
     /**
      * target resource
-*/
+     */
     resource:   string;
 
     /**
      * This is optional for specifying runtime condition
-*/
+     */
     condition:  string;
 
     /**
      * This is optional for specifying effect and can be allow or deny
-*/
+     */
     effect: ClaimEffects;
 
     /**
@@ -120,26 +120,26 @@ export interface IClaim {
      *
      * @param {*} action - action to perform
      * @param {*} resource - target resource that will be acted upon
-*/
+     */
     implies(action: string, resource: string): boolean;
 
     /**
      * This method returns true if condition is valid expression
-*/
+     */
     hasCondition(): boolean;
 
     /**
      * This method returns relam for Claim
-*/
+     */
     realm(): IRealm;
 
     /**
      * This method returns start-date when claim is assigned
-*/
+     */
     startDate(): string;
 
     /**
      * This method returns end-date when claim is assigned
-*/
+     */
     endDate(): string;
 }
