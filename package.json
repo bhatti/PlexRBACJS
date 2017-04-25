@@ -7,7 +7,7 @@
   "scripts": {
     "flow": "yarn run flow",
     "webpack": "webpack",
-    "build": "babel src/app.js > src/index.js && babel src/ -d lib/",
+    "build": "babel src/app.js > src/index.js && babel src/cli/rbac_cli.js > src/cli/index.js && babel src/ -d lib/",
     "prepublish": "yarn run build",
     "lib": "yarn run babel -- src/ -d lib/",
     "mocha": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill --recursive",
@@ -15,12 +15,16 @@
     "y": "mocha --timeout=3000 --compilers js:babel-register --require babel-polyfill test/routes/security_service_test.js",
     "test": "nyc --reporter=html --reporter=text mocha --timeout=4000 --recursive --compilers js:babel-register --require babel-polyfill",
     "dstart": "NODE_ENV=dev && babel-node lib/index.js --presets es2015,stage-2",
-    "start": "NODE_ENV=dev && babel src/app.js > src/index.js && babel src/ -d lib/ && node lib/index.js",
+    "start": "NODE_ENV=dev && babel src/app.js > src/index.js && babel src/cli/rbac_cli.js > src/cli/index.js && babel src/ -d lib/ && node lib/index.js",
+    "cli": "babel src/cli/rbac_cli.js > src/cli/index.js && babel src/ -d lib/ && node lib/cli/index.js",
     "coverage": "nyc report --reporter=text-lcov | coveralls"
   },
   "dependencies": {
     "babel-plugin-transform-regenerator": "^6.24.1",
     "bunyan-winston-adapter": "^0.2.0",
+    "command-line-args": "^4.0.3",
+    "command-line-usage": "^4.0.0",
+    "dtrace-provider": "^0.8.1",
     "jexl": "^1.1.4",
     "lodash": "^4.17.4",
     "morph-expressions": "^1.0.2",

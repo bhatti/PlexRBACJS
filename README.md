@@ -35,6 +35,11 @@ git clone git@github.com:bhatti/PlexRBACJS.github
 ./yarn build
 ```
 
+- Running
+```bash
+./yarn start
+```
+
 ## Design:
 
 
@@ -355,9 +360,58 @@ Which would return 'allow'.
 
 
 
+## Command line interface 
+PlexRBACJs comes with command line interface, e.g.
+```javascript
+yarn build 
+``` 
+
+### Adding a realm:
+```javascript
+node lib/cli/index.js --method addRealm --realmName=nowsecure --dbPath /tmp/test.db 
+``` 
+
+### Showing realms:
+```javascript
+node lib/cli/index.js --method showRealms --dbPath /tmp/test.db 
+``` 
+
+### Adding role:
+```javascript
+node lib/cli/index.js --method addRole --roleName god --claimId 1 --claimId 2 --roleId 1 --roleId 2 --realmId 1 --dbPath /tmp/test.db 
+``` 
+
+### Showing roles:
+```javascript
+node lib/cli/index.js --method showRoles --realmId 1 --dbPath /tmp/test.db
+``` 
+
+### Adding claim:
+```javascript
+node lib/cli/index.js --method addClaim --action buy --resource car --realmId 1 --dbPath /tmp/test.db
+``` 
+
+### Showing claims:
+```javascript
+node lib/cli/index.js --method showClaims --realmId 1 --dbPath /tmp/test.db
+``` 
+
+### Adding principal:
+```javascript
+node lib/cli/index.js --method addPrincipal --principalName david --claimId 1 --claimId 2 --roleId 1 --roleId 2 --realmId 1 --dbPath /tmp/test.db
+``` 
+
+### Showing principals:
+```javascript
+node lib/cli/index.js --method showPrincipals --realmId 1 --dbPath /tmp/test.db
+
+```
+
+
 ## Building REST services using Resty framework:
 Then you can start the REST based web service within Jetty by typing:
 ```javascript
+yarn build
 node start
 ```
 
