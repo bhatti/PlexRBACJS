@@ -715,23 +715,19 @@ global.server.pre(async (req, res, next) => {
         let realm       = await global.server.repositoryLocator.realmRepository.findById(realmId);
         let principal   = await global.server.repositoryLocator.principalRepository.findById(principalId);
 
-        if (principal.realm().id !== realm.id) {
-            return next(new errors.NotAuthorizedError('principal-realm does not match.'));
-        }
-
         let request    = new SecurityAccessRequest(
                             realm.realmName,
                             principal.principalName,
                             req.method,
                             resource,
-                            {});
+                            req.params);
         let result = await global.server.securityManager.check(request);
         if (result != Claim.allow) {
             return next(new errors.NotAuthorizedError(`Access to perform ${req.method} ${resource}.`));
         } 
         next();
     } catch (err) {
-        console.log(err);                                                                                                            
+        console.log(err); 
         return next(new errors.NotAuthorizedError(`Failed to authorize ${resource}.`));
     }
 });
