@@ -53,7 +53,7 @@ global.server.pre(async (req, res, next) => {
                             {});
         let result = await global.server.securityManager.check(request);
         if (result != Claim.allow) {
-            return next(new errors.NotAuthorizedError(`Access to perform ${req.method} ${resource}.`));
+            return next(new errors.NotAuthorizedError(`Access to perform ${req.method} ${resource} denied.`));
         } 
         next();
     } catch (err) {
