@@ -59,6 +59,6 @@ export class Role implements IRole, UniqueIdentifier {
 	 * returns textual representation
 	 */
 	toString() {
-		return `(${this.roleName}), claims ${String(this.claims)}`;
+		return `(${this.id}, ${this.roleName}), claims ${String(this.claims)}`;
 	}
 }

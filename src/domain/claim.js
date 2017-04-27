@@ -85,6 +85,6 @@ export class Claim implements IClaim, UniqueIdentifier {
 	 * returns textual representation
 	 */
 	toString() {
-		return `(${this.action}, ${this.resource}, ${this.condition})`;
+		return `(${this.id}, ${this.action}, ${this.resource}, ${this.condition})`;
 	}
 }

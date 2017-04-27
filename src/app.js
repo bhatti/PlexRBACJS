@@ -43,15 +43,15 @@ global.server = restify.createServer({
 /**
  * Middleware
  */
-server.use(restify.jsonBodyParser({ mapParams: true }));
-server.use(restify.acceptParser(server.acceptable));
-server.use(restify.queryParser({ mapParams: true }));
-server.use(restify.fullResponse());
+global.server.use(restify.jsonBodyParser({ mapParams: true }));
+global.server.use(restify.acceptParser(server.acceptable));
+global.server.use(restify.queryParser({ mapParams: true }));
+global.server.use(restify.fullResponse());
 
 /**
  * Error Handling
  */
-server.on('uncaughtException', (req, res, route, err) => {
+global.server.on('uncaughtException', (req, res, route, err) => {
 	log.error(`Uncaught error ${err.stack}`);
 	res.send(err);
 });
@@ -59,9 +59,9 @@ server.on('uncaughtException', (req, res, route, err) => {
 /**
  * Lift Server, Connect to DB & Bind Routes
  */
-server.listen(config.port, () => {
-	server.repositoryLocator = new RepositoryLocator('sqlite', '/tmp/test.db', () => {});
-	server.securityManager   = new SecurityManager(new ConditionEvaluator(), server.repositoryLocator);
+global.server.listen(config.port, () => {
+	global.server.repositoryLocator = new RepositoryLocator('sqlite', '/tmp/test.db', () => {});
+	global.server.securityManager   = new SecurityManager(new ConditionEvaluator(), global.server.repositoryLocator);
 	//
 	require('./routes/claim_service');
 	require('./routes/realm_service');

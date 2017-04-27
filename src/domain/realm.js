@@ -27,6 +27,6 @@ export class Realm implements IRealm, UniqueIdentifier {
      * returns textual representation
      */
     toString() {
-        return `(${this.realmName})`;
+        return `(${this.id}, ${this.realmName})`;
     }
 }

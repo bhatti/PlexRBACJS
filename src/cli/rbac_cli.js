@@ -381,13 +381,13 @@ export class RbacCli {
 		switch (options.method) {
 		  case 'addRealm':
 			let realm = await this.addRealmArgs(options.realmName);
-			console.log(`Added realm ${realm}`);
+			console.log(`Added realm ${String(realm)}`);
 			break;
 		  case 'showRealms':
 			let realms = await this.getRealms();
 			console.log('Realms: ');
 			realms.forEach(realm => {
-				console.log(`\t${realm}`);
+				console.log(`\t${String(realm)}`);
 			});
 			break;
 		  case 'removeRealm':
@@ -396,13 +396,13 @@ export class RbacCli {
 			break;
 		  case 'addRole':
 			let role = await this.addRoleArgs(options.realmId, options.roleName, options.claimId, options.roleId);
-			console.log(`Added role ${role}`);
+			console.log(`Added role ${String(role)}`);
 			break;
 		  case 'showRoles':
 			let roles = await this.getRoles(options.realmId);
 			console.log(`Roles for ${options.realmId}: ${roles.length}`);
 			roles.forEach(role => {
-				console.log(`\t${role}`);
+				console.log(`\t${String(role)}`);
 			});
 			break;
 		  case 'removeRole':
@@ -411,13 +411,13 @@ export class RbacCli {
 			break;
 		  case 'addClaim':
 			let claim = await this.addClaimArgs(options.realmId, options.action, options.resource, options.condition);
-			console.log(`Added claim ${claim}`);
+			console.log(`Added claim ${String(claim)}`);
 			break;
 		  case 'showClaims':
 			let claims = await this.getClaims(options.realmId);
 			console.log('Claims: ');
 			claims.forEach(claim => {
-				console.log(`\t${claim}`);
+				console.log(`\t${String(claim)}`);
 			});
 			break;
 		  case 'removeClaim':
@@ -426,13 +426,13 @@ export class RbacCli {
 			break;
 		  case 'addPrincipal':
 			let principal = await this.addPrincipalArgs(options.realmId, options.principalName, options.claimId, options.roleId);
-			console.log(`Added principal ${principal}`);
+			console.log(`Added principal ${String(principal)}`);
 			break;
 		  case 'showPrincipals':
 			let principals = await this.getPrincipals(options.realmId);
 			console.log(`Principals for ${options.realmId}: `);
 			principals.forEach(principal => {
-				console.log(`\t${principal}`);
+				console.log(`\t${String(principal)}`);
 			});
 			break;
 		  case 'removePrincipal':

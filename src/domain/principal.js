@@ -73,6 +73,6 @@ export class Principal implements IPrincipal, UniqueIdentifier {
 	 * returns textual representation
 	 */
 	toString() {
-		return `(${this.principalName}, ${String(this.claims)}, ${String(this.roles)})`;
+		return `(${this.id}, ${this.principalName}, ${String(this.claims)}, ${String(this.roles)})`;
 	}
 }

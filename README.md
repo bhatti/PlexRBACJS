@@ -368,42 +368,42 @@ yarn build
 
 ### Adding a realm:
 ```javascript
-node lib/cli/index.js --method addRealm --realmName=nowsecure --dbPath /tmp/test.db 
+node lib/cli/rbac_cli.js --method addRealm --realmName=nowsecure --dbPath /tmp/test.db 
 ``` 
 
 ### Showing realms:
 ```javascript
-node lib/cli/index.js --method showRealms --dbPath /tmp/test.db 
+node lib/cli/rbac_cli.js --method showRealms --dbPath /tmp/test.db 
 ``` 
 
 ### Adding role:
 ```javascript
-node lib/cli/index.js --method addRole --roleName god --claimId 1 --claimId 2 --roleId 1 --roleId 2 --realmId 1 --dbPath /tmp/test.db 
+node lib/cli/rbac_cli.js --method addRole --roleName god --claimId 1 --claimId 2 --roleId 1 --roleId 2 --realmId 1 --dbPath /tmp/test.db 
 ``` 
 
 ### Showing roles:
 ```javascript
-node lib/cli/index.js --method showRoles --realmId 1 --dbPath /tmp/test.db
+node lib/cli/rbac_cli.js --method showRoles --realmId 1 --dbPath /tmp/test.db
 ``` 
 
 ### Adding claim:
 ```javascript
-node lib/cli/index.js --method addClaim --action buy --resource car --realmId 1 --dbPath /tmp/test.db
+node lib/cli/rbac_cli.js --method addClaim --action buy --resource car --realmId 1 --dbPath /tmp/test.db
 ``` 
 
 ### Showing claims:
 ```javascript
-node lib/cli/index.js --method showClaims --realmId 1 --dbPath /tmp/test.db
+node lib/cli/rbac_cli.js --method showClaims --realmId 1 --dbPath /tmp/test.db
 ``` 
 
 ### Adding principal:
 ```javascript
-node lib/cli/index.js --method addPrincipal --principalName david --claimId 1 --claimId 2 --roleId 1 --roleId 2 --realmId 1 --dbPath /tmp/test.db
+node lib/cli/rbac_cli.js --method addPrincipal --principalName david --claimId 1 --claimId 2 --roleId 1 --roleId 2 --realmId 1 --dbPath /tmp/test.db
 ``` 
 
 ### Showing principals:
 ```javascript
-node lib/cli/index.js --method showPrincipals --realmId 1 --dbPath /tmp/test.db
+node lib/cli/rbac_cli.js --method showPrincipals --realmId 1 --dbPath /tmp/test.db
 
 ```
 
@@ -703,6 +703,81 @@ which is denied:
 < HTTP/1.1 403 Unauthorized
 
 ```
+## Protecting your APIs:
+PlexRBACJS authorization code can be embedded with your APIs to authorize access, e.g here is a sample code for Restify based APIs where all APIs use /realms/:realmId/principals/:principal (though you probably will store realmId/principalId in session):
+```javascript
+global.server.pre(async (req, res, next) => {
+    let pathToks    = req.path().split('/');
+    let realmId     = Number.parseInt(pathToks[2]);
+    let principalId = Number.parseInt(pathToks[4]);
+    let resource    = `/${pathToks[5]}`;
+    try {
+        let realm       = await global.server.repositoryLocator.realmRepository.findById(realmId);
+        let principal   = await global.server.repositoryLocator.principalRepository.findById(principalId);
+
+        if (principal.realm().id !== realm.id) {
+            return next(new errors.NotAuthorizedError('principal-realm does not match.'));
+        }
+
+        let request    = new SecurityAccessRequest(
+                            realm.realmName,
+                            principal.principalName,
+                            req.method,
+                            resource,
+                            {});
+        let result = await global.server.securityManager.check(request);
+        if (result != Claim.allow) {
+            return next(new errors.NotAuthorizedError(`Access to perform ${req.method} ${resource}.`));
+        } 
+        next();
+    } catch (err) {
+        console.log(err);                                                                                                            
+        return next(new errors.NotAuthorizedError(`Failed to authorize ${resource}.`));
+    }
+});
+```
+You can then add claims for specific roles or principals, e.g.
+```bash
+node lib/cli/rbac_cli.js --method addClaim --action GET --resource /test --realmId 1 --dbPath /tmp/test.db
+```
+Added claim (11, GET, /test)
+```bash
+node lib/cli/rbac_cli.js --method addClaim --action POST --resource /test --realmId 1 --dbPath /tmp/test.db
+```
+Added claim (12, POST, /test)
+```bash
+node lib/cli/rbac_cli.js --method addClaim --action PUT --resource /test --realmId 1 --dbPath /tmp/test.db
+```
+Added claim (13, PUT, /test)
+```bash
+node lib/cli/rbac_cli.js --method addClaim --action DELETE --resource /test --realmId 1 --dbPath /tmp/test.db
+```
+Added claim (14, DELETE, /test)
+
+```bash
+node lib/cli/rbac_cli.js --method addPrincipal --principalName david --claimId 11 --claimId 12 --claimId 13 --claimId 14 --realmId 1 --dbPath /tmp/test.db
+```
+
+Added principal (7, david, (11, GET, /test),(12, POST, /test),(13, PUT, /test),(14, DELETE, /test))
+
+The access would be allowed when using 
+```bash
+curl http://localhost:3001/realms/1/principals/7/test
+[{"item":1},{"item":2},{"item":3}]
+```
+
+```bash
+curl -X POST http://localhost:3001/realms/1/principals/7/test
+{"created":true}
+```
+
+But it would fail with unauthorized user, e.g.
+
+```bash
+curl http://localhost:3001/realms/1/principals/17/test
+{"code":"NotAuthorized","message":"Failed to authorize /test."}
+```
+See sample code under src/sample for more details.
 
 ## Contact
 Please send questions or suggestions to bhatti AT plexobject.com.

@@ -59,7 +59,7 @@ describe('SecurityService', function () {
             .end((err, res) => {
                 res.should.have.status(200);
                 res.body.should.be.a('array');
-                res.body.length.should.be.eql(1);
+                res.body.length.should.be.gt(0);
                 res.body[0].should.have.property('realmName').eql('banking');
                 done();
             });
