@@ -47,6 +47,6 @@ global.server.get('/realms/:realmId/principals/:principalId/authorization', asyn
 		res.send(200, `Access to perform ${req.params.action} on ${req.params.resource} is allowed.`);
 		next();
 	} else {
-		return next(new errors.NotAuthorizedError(`Access to perform ${req.params.action} on ${req.params.resource} is denied.`));
+		return next(new errors.UnauthorizedError(`Access to perform ${req.params.action} on ${req.params.resource} is denied.`));
 	}
 })

@@ -58,6 +58,7 @@
     "flow-bin": "^0.44.2",
     "mocha": "^3.2.0",
     "nyc": "^10.2.0",
+    "restify-cookies": "^0.2.2",
     "webpack": "^2.3.2"
   }
 }

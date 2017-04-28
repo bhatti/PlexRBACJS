@@ -405,7 +405,7 @@ describe('SecurityService', function () {
             chai.request(server)
             .get(`/realms/${realmId}/principals/${tomId}/authorization?action=read&resource=DepositAccount&employeeRegion=WEST`)
             .end((err, res) => {
-                res.should.have.status(403);
+                res.should.have.status(401);
                 done();
             });
         });
@@ -435,7 +435,7 @@ describe('SecurityService', function () {
             chai.request(server)
             .get(`/realms/${realmId}/principals/${cassyId}/authorization?action=modify&resource=DepositAccount`)
             .end((err, res) => {
-                res.should.have.status(403);
+                res.should.have.status(401);
                 done();
             });
         });
@@ -475,7 +475,7 @@ describe('SecurityService', function () {
             chai.request(server)
             .get(`/realms/${realmId}/principals/${aliId}/authorization?action=read&resource=GeneralLedger&transactionDateYear=2015&currentYear=2017`)
             .end((err, res) => {
-                res.should.have.status(403);
+                res.should.have.status(401);
                 done();
             });
         });
@@ -505,7 +505,7 @@ describe('SecurityService', function () {
             chai.request(server)
             .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=read&resource=LoanAccount&accountBalance=10001`)
             .end((err, res) => {
-                res.should.have.status(403);
+                res.should.have.status(401);
                 done();
             });
         });
@@ -555,7 +555,7 @@ describe('SecurityService', function () {
             chai.request(server)
             .get(`/realms/${realmId}/principals/${mikeId}/authorization?action=create&resource=GeneralLedgerPostingRules&transactionDateYear=2017&currentYear=2017`)
             .end((err, res) => {
-                res.should.have.status(403);
+                res.should.have.status(401);
                 done();
             });
         });

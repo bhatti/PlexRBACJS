@@ -35,7 +35,7 @@ git clone git@github.com:bhatti/PlexRBACJS.github
 ./yarn build
 ```
 
-- Running
+- Running REST API
 ```bash
 ./yarn start
 ```
@@ -625,9 +625,9 @@ Now check if user "tom" can view deposit-accounts, e.g.
 ```javascript
 curl  "http://localhost:3000/realms/1/principals/1/authorization?action=read&resource=DepositAccount&employeeRegion=WEST"
 ```
-Note that we are passing principal-id 1 above and it would return 403 http response code because employee region didn't match MIDWEST
+Note that we are passing principal-id 1 above and it would return 401 http response code because employee region didn't match MIDWEST
 ```javascript
-{"code":"NotAuthorized","message":"Access to perform read on DepositAccount is denied."}
+{"code":"UnauthorizedError","message":"Access to perform read on DepositAccount is denied."}
 ```
 And by running it again with correct region, it would allow it:
 ```javascript
@@ -645,7 +645,7 @@ curl  "http://localhost:3000/realms/1/principals/1/authorization?action=delete&r
 
 which returns http-response-code 401, e.g.
 ```javascript
-{"code":"NotAuthorized","message":"Access to perform delete on DepositAccount is denied."}
+{"code":"UnauthorizedError","message":"Access to perform delete on DepositAccount is denied."}
 ```
 
 Then we create if cassy, the CSR can delete deposit-account, e.g.
@@ -700,40 +700,45 @@ curl  "http://localhost:3000/realms/1/principals/3/authorization?action=create&r
 
 which is denied:
 ```javascript
-< HTTP/1.1 403 Unauthorized
+< HTTP/1.1 401 Unauthorized
 
 ```
 ## Protecting your APIs:
-PlexRBACJS authorization code can be embedded with your APIs to authorize access, e.g here is a sample code for Restify based APIs where all APIs use /realms/:realmId/principals/:principal (though you probably will store realmId/principalId in session):
+PlexRBACJS authorization code can be embedded with your APIs to authorize access. For example, you can create a login API to authenticate user and store realm-id and principal-id in session or cookie, e.g.,
+
 ```javascript
-global.server.pre(async (req, res, next) => {
-    let pathToks    = req.path().split('/');
-    let realmId     = Number.parseInt(pathToks[2]);
-    let principalId = Number.parseInt(pathToks[4]);
-    let resource    = `/${pathToks[5]}`;
-    try {
-        let realm       = await global.server.repositoryLocator.realmRepository.findById(realmId);
-        let principal   = await global.server.repositoryLocator.principalRepository.findById(principalId);
+global.server.post('/login', (req, res, next) => {
+    res.setCookie('principalId', req.params.principalId);
+    res.setCookie('realmId', req.params.realmId);
+    res.send({'authenticated':true});
+    next();
+});
+```
 
-        if (principal.realm().id !== realm.id) {
-            return next(new errors.NotAuthorizedError('principal-realm does not match.'));
-        }
-
-        let request    = new SecurityAccessRequest(
-                            realm.realmName,
-                            principal.principalName,
-                            req.method,
-                            resource,
-                            {});
-        let result = await global.server.securityManager.check(request);
-        if (result != Claim.allow) {
-            return next(new errors.NotAuthorizedError(`Access to perform ${req.method} ${resource}.`));
-        } 
-        next();
-    } catch (err) {
-        console.log(err);                                                                                                            
-        return next(new errors.NotAuthorizedError(`Failed to authorize ${resource}.`));
-    }
+You can then create a filter to protect your APIs, e.g.:
+```javascript
+global.server.use(async (req, res, next) => {                                                                                                        
+    if (req.path() == '/login') {
+        return next();
+    } else {
+        let resource    = req.path();
+        try {
+            cookieParser.parse(req, res, next);
+            let realmId     = req.cookies['realmId'];
+            let principalId = req.cookies['principalId'];
+            let realm       = await global.server.repositoryLocator.realmRepository.findById(realmId);
+            let principal   = await global.server.repositoryLocator.principalRepository.findById(principalId);
+            let request    = new SecurityAccessRequest(realm.realmName, principal.principalName, req.method, resource, req.params);
+            let result = await global.server.securityManager.check(request);
+            if (result != Claim.allow) {
+                return next(new errors.UnauthorizedError(`Access to perform ${req.method} ${resource}.`));
+            } else {
+                return next();
+            }
+        } catch (err) {
+            return next(new errors.UnauthorizedError(`Failed to authorize ${resource}.`));
+        }   
+    }   
 });
 ```
 You can then add claims for specific roles or principals, e.g.
@@ -760,22 +765,29 @@ node lib/cli/rbac_cli.js --method addPrincipal --principalName david --claimId 1
 
 Added principal (7, david, (11, GET, /test),(12, POST, /test),(13, PUT, /test),(14, DELETE, /test))
 
-The access would be allowed when using 
+Then test login as follows:
 ```bash
-curl http://localhost:3001/realms/1/principals/7/test
+curl -X POST -c cookies.txt 'http://localhost:3001/login?principalId=7&realmId=1'
+```
+It will store principalId and realmId in cookie session, you can then try to access your API as follows:
+```bash
+curl -b cookies.txt http://localhost:3001/test
 [{"item":1},{"item":2},{"item":3}]
 ```
 
 ```bash
-curl -X POST http://localhost:3001/realms/1/principals/7/test
+curl -X POST -b cookies.txt http://localhost:3001/test
 {"created":true}
 ```
 
 But it would fail with unauthorized user, e.g.
-
 ```bash
-curl http://localhost:3001/realms/1/principals/17/test
-{"code":"NotAuthorized","message":"Failed to authorize /test."}
+curl -X POST -c cookies.txt 'http://localhost:3001/login?principalId=27&realmId=1'
+```
+So when you try to access the API, it would fail:
+```bash
+curl -b cookies.txt http://localhost:3001/test
+{"code":"UnauthorizedError","message":"Failed to authorize /test."}
 ```
 See sample code under src/sample for more details.
 

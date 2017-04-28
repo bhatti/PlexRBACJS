@@ -7,17 +7,20 @@
 const _      = require('lodash'),
 	  errors = require('restify-errors');
 
-const authCheck = (target, name, decorated) => {
-  console.log(`target ${JSON.stringify(target)}, name ${JSON.stringify(name)}, decorated ${JSON.stringify(decorated)} -- ${decorated}`);
-  return decorated;
-};
-
-
+/**
+ * LOGIN
+ */
+global.server.post('/login', (req, res, next) => {
+    res.setCookie('principalId', req.params.principalId);
+    res.setCookie('realmId', req.params.realmId);
+    res.send({'authenticated':true});
+	next();
+});
 
 /**
  * POST
  */
-global.server.post('/realms/:realmId/principals/:principalId/test', (req, res, next) => {
+global.server.post('/test', (req, res, next) => {
     res.send(201, {'created':true});
 	next();
 });
@@ -25,7 +28,7 @@ global.server.post('/realms/:realmId/principals/:principalId/test', (req, res, n
 /**
  * LIST
  */
-global.server.get('/realms/:realmId/principals/:principalId/test', (req, res, next) => {
+global.server.get('/test', (req, res, next) => {
     res.send([{'item':1}, {'item':2}, {'item':3}]);
 	next();
 });
@@ -33,7 +36,7 @@ global.server.get('/realms/:realmId/principals/:principalId/test', (req, res, ne
 /**
  * GET
  */
-global.server.get('/realms/:realmId/principals/:principalId/test/:id', (req, res, next) => {
+global.server.get('/test/:id', (req, res, next) => {
     res.send({'item':req.params.id});
 	next();
 });
@@ -41,7 +44,7 @@ global.server.get('/realms/:realmId/principals/:principalId/test/:id', (req, res
 /**
  * PUT
  */
-global.server.put('/realms/:realmId/principals/:principalId/test/:id', (req, res, next) => {
+global.server.put('/test/:id', (req, res, next) => {
     res.send({'item':req.params.id});
 	next();
 });
@@ -49,7 +52,7 @@ global.server.put('/realms/:realmId/principals/:principalId/test/:id', (req, res
 /**
  * DELETE
  */
-global.server.del('/realms/:realmId/principals/:principalId/test/:id', (req, res, next) => {
+global.server.del('/test/:id', (req, res, next) => {
     res.send({'item':req.params.id});
 	next();
 });
