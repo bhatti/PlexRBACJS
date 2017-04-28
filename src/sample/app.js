@@ -64,7 +64,6 @@ global.server.use(async (req, res, next) => {
 global.server.repositoryLocator = new RepositoryLocator('sqlite', '/tmp/test.db', () => {});
 global.server.securityManager   = new SecurityManager(new ConditionEvaluator(), global.server.repositoryLocator); 
 
-
 //
 global.server.listen(3001, function() {
     require('./test_route');
