@@ -40,6 +40,11 @@ git clone git@github.com:bhatti/PlexRBACJS.github
 ./yarn start
 ```
 
+- Command line
+```bash
+./yarn cli
+```
+
 ## Design:
 
 
@@ -134,8 +139,6 @@ class User extends PrincipalImpl {
 ```javascript
 class Customer extends User {
 }
-
-```
 
 ```
 
