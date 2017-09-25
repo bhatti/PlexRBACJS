@@ -1,0 +1,28 @@
+{
+  "name": "PlexRBACJS",
+  "version": "1.0.0",
+  "repository": "git@github.com:bhatti/PlexRBACJS.git",
+  "license": "MIT",
+  "scripts": {
+    "x": "mocha --timeout=2000 test/manager/saas_rbac_test.js",
+    "y": "mocha --timeout=2000 test/expr/expr_evaluator_test.js",
+    "test": "nyc --reporter=html --reporter=text mocha --timeout=4000 --recursive",
+    "coverage": "nyc report --reporter=text-lcov | coveralls"
+  },
+  "dependencies": {
+    "bluebird": "^3.5.0",
+    "jexl": "^1.1.4",
+    "lodash": "^4.17.4",
+    "redis": "^2.8.0"
+  },
+  "devDependencies": {
+    "chai": "^3.5.0",
+    "chai-as-promised": "^6.0.0",
+    "chai-http": "^3.0.0",
+    "mocha": "^3.2.0",
+    "net": "^1.0.2",
+    "istanbul": "^0.4.5",
+    "coveralls": "^2.13.0",
+    "nyc": "^10.2.0"
+  }
+}
