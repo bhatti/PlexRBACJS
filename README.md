@@ -104,5 +104,6 @@ Please send questions or suggestions to bhatti AT plexobject.com.
  * http://www.coresecuritypatterns.com/patterns.htm
  * http://cwiki.apache.org/confluence/display/SHIRO/Index
  * http://www.secs.oakland.edu/~kim2/papers/FASE04.pdf 
-
+ * http://www.mecs-press.net/ijmecs/ijmecs-v3-n5/IJMECS-V3-N5-7.pdf 
+ * http://csrc.nist.gov/groups/SNS/rbac/documents/design_implementation/pp-rbac-fin.pdf
 
